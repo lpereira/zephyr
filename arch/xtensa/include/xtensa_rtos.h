@@ -40,6 +40,10 @@
  * However these can still be overridden from the command line.
  */
 
+#if defined(CONFIG_BOARD_ESP32)
+ #define XT_BOARD 1
+#endif
+
 #ifndef XT_SIMULATOR
   #if CONFIG_SIMULATOR_XTENSA
     #define XT_SIMULATOR             1  /* Simulator mode */
