@@ -268,6 +268,12 @@ void _timer_idle_exit(void)
 extern void _zxt_tick_timer_init(void);
 unsigned int _xt_tick_divisor;  /* cached number of cycles per tick */
 
+u32_t ets_get_cpu_frequency(void);
+unsigned int xtbsp_clock_freq_hz(void)
+{
+	return ets_get_cpu_frequency();
+}
+
 /*
  * Compute and initialize at run-time the tick divisor (the number of
  * processor clock cycles in an RTOS tick, used to set the tick timer).
