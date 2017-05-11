@@ -22,6 +22,9 @@
 #define RAMABLE_REGION dram0_0_seg :dram0_0_phdr
 #define ROMABLE_REGION iram0_0_seg :iram0_0_phdr
 
+PROVIDE ( uart_tx_one_char = 0x40009200 );
+PROVIDE ( uart_rx_one_char = 0x400092d0 );
+
 MEMORY
 {
   iram0_0_seg(RX): org = 0x40080000, len = 0x20000
