@@ -42,13 +42,15 @@ PHDRS
   dram0_0_phdr PT_LOAD;
 }
 
-/*  Default entry point:  */
-PROVIDE ( _ResetVector = 0x40000400 );
-
 _rom_store_table = 0;
 
-PROVIDE(_memmap_vecbase_reset = 0x40000450);
-PROVIDE(_memmap_reset_vector = 0x40000400);
+/* TODO: set more strict CACHEATTR to catch access by bogus pointers */
+_memmap_cacheattr_wb_trapnull = 0x2222211F;
+PROVIDE(_memmap_cacheattr_reset = _memmap_cacheattr_wb_trapnull);
+
+/* Vectors will be loaded into the start of IRAM. Set _memmap_vecbase_reset
+   accordingly so that startup code can adjust VECBASE */
+PROVIDE(_memmap_vecbase_reset = 0x40080000);
 
 SECTIONS
 {
@@ -111,6 +113,8 @@ SECTIONS
     . = 0x3C0;
     KEEP(*(.DoubleExceptionVector.text));
     . = 0x400;
+    KEEP(*(.ResetVector.text));
+    . = ALIGN(4);
     *(.*Vector.literal)
 
     *(.UserEnter.literal);
