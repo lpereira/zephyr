@@ -41,6 +41,9 @@ static int esp32_uart_init(struct device *dev)
 {
 	ARG_UNUSED(dev);
 
+    uartAttach();
+    ets_install_uart_printf();
+
 	return 0;
 }
 

@@ -25,6 +25,9 @@
 PROVIDE ( ets_get_cpu_frequency = 0x4000855c );
 PROVIDE ( uart_tx_one_char = 0x40009200 );
 PROVIDE ( uart_rx_one_char = 0x400092d0 );
+PROVIDE ( uartAttach = 0x40008fd0 );
+PROVIDE ( ets_install_uart_printf = 0x40007d28 );
+PROVIDE ( ets_printf = 0x40007d54 );
 
 MEMORY
 {
