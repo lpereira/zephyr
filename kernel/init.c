@@ -37,7 +37,14 @@ const char * const build_timestamp = BUILD_TIMESTAMP;
 
 /* boot banner items */
 
-#define BOOT_BANNER "BOOTING ZEPHYR OS v" KERNEL_VERSION_STRING
+#if defined(CONFIG_BOOT_DELAY) && CONFIG_BOOT_DELAY > 0
+#define BOOT_DELAY_BANNER " (delaying boot "	\
+	STRINGIFY(CONFIG_BOOT_DELAY) "ms)"
+#else
+#define BOOT_DELAY_BANNER ""
+#endif
+#define BOOT_BANNER "BOOTING ZEPHYR OS v"	\
+	KERNEL_VERSION_STRING BOOT_DELAY_BANNER
 
 #if !defined(CONFIG_BOOT_BANNER)
 #define PRINT_BOOT_BANNER() do { } while (0)
@@ -353,7 +360,9 @@ FUNC_NORETURN void _Cstart(void)
 	/* display boot banner */
 
 	PRINT_BOOT_BANNER();
-
+#if defined(CONFIG_BOOT_DELAY) && CONFIG_BOOT_DELAY > 0
+	k_sleep(CONFIG_BOOT_DELAY);
+#endif
 	switch_to_main_thread();
 
 	/*
