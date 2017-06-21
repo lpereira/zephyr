@@ -15,11 +15,11 @@
 #define _ASMLANGUAGE
 
 #include <autoconf.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <generated_dts_board.h>
 
-#include <linker-defs.h>
-#include <linker-tool.h>
+#include <linker/linker-defs.h>
+#include <linker/linker-tool.h>
 
 /* physical address of RAM */
 #ifdef CONFIG_XIP
@@ -41,10 +41,17 @@
 #endif
 
 #define ROM_ADDR (CONFIG_FLASH_BASE_ADDRESS + CONFIG_FLASH_LOAD_OFFSET)
+#ifdef CONFIG_TI_CCFG_PRESENT
+  #define CCFG_SIZE 88
+  #define ROM_SIZE (CONFIG_FLASH_SIZE*1K - CONFIG_FLASH_LOAD_OFFSET - \
+		    CCFG_SIZE)
+  #define CCFG_ADDR (ROM_ADDR + ROM_SIZE)
+#else
 #if CONFIG_FLASH_LOAD_SIZE > 0
   #define ROM_SIZE CONFIG_FLASH_LOAD_SIZE
 #else
   #define ROM_SIZE (CONFIG_FLASH_SIZE*1K - CONFIG_FLASH_LOAD_OFFSET)
+#endif
 #endif
 
 #if defined(CONFIG_XIP)
@@ -64,6 +71,9 @@
 MEMORY
     {
     FLASH                 (rx) : ORIGIN = ROM_ADDR, LENGTH = ROM_SIZE
+#ifdef CONFIG_TI_CCFG_PRESENT
+    FLASH_CCFG            (rwx): ORIGIN = CCFG_ADDR, LENGTH = CCFG_SIZE
+#endif
     SRAM                  (wx) : ORIGIN = RAM_ADDR, LENGTH = RAM_SIZE
 
     /* Used by and documented in include/linker/intlist.ld */
@@ -156,14 +166,20 @@ SECTIONS
 
     GROUP_END(ROMABLE_REGION)
 
+/* Some TI SoCs have a special configuration footer, at the end of flash. */
+#ifdef CONFIG_TI_CCFG_PRESENT
+    SECTION_PROLOGUE(.ti_ccfg,,)
+    {
+    KEEP(*(TI_CCFG))
+    } > FLASH_CCFG
+#endif
+
     GROUP_START(RAMABLE_REGION)
 
     SECTION_DATA_PROLOGUE(_DATA_SECTION_NAME,,)
 	{
 	_image_ram_start = .;
 	__data_ram_start = .;
-	*(.top_of_image_ram)
-	*(.top_of_image_ram.*)
 	*(.data)
 	*(".data.*")
 
@@ -204,8 +220,6 @@ SECTIONS
          */
         *(.noinit)
         *(".noinit.*")
-        *(.bottom_of_image_ram)
-        *(.bottom_of_image_ram.*)
         } GROUP_LINK_IN(RAMABLE_REGION)
 
     /* Define linker symbols */

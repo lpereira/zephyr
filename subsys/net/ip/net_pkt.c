@@ -274,8 +274,9 @@ void net_pkt_print_frags(struct net_pkt *pkt)
 		NET_INFO("[%d] frag %p len %d size %d reserve %d "
 			 "pool %p [sz %d ud_sz %d]",
 			 count, frag, frag->len, frag_size, ll_overhead,
-			 frag->pool, frag->pool->buf_size,
-			 frag->pool->user_data_size);
+			 net_buf_pool_get(frag->pool_id),
+			 net_buf_pool_get(frag->pool_id)->buf_size,
+			 net_buf_pool_get(frag->pool_id)->user_data_size);
 
 		count++;
 
@@ -703,9 +704,10 @@ void net_pkt_unref(struct net_pkt *pkt)
 	frag = pkt->frags;
 	while (frag) {
 		NET_DBG("%s (%s) [%d] frag %p ref %d frags %p (%s():%d)",
-			pool2str(frag->pool), frag->pool->name,
-			get_frees(frag->pool), frag, frag->ref - 1,
-			frag->frags, caller, line);
+			pool2str(net_buf_pool_get(frag->pool_id)),
+			net_buf_pool_get(frag->pool_id)->name,
+			get_frees(net_buf_pool_get(frag->pool_id)), frag,
+			frag->ref - 1, frag->frags, caller, line);
 
 		if (!frag->ref) {
 			const char *func_freed;
@@ -781,7 +783,9 @@ struct net_buf *net_pkt_frag_ref(struct net_buf *frag)
 
 #if defined(CONFIG_NET_DEBUG_NET_PKT)
 	NET_DBG("%s (%s) [%d] frag %p ref %d (%s():%d)",
-		pool2str(frag->pool), frag->pool->name, get_frees(frag->pool),
+		pool2str(net_buf_pool_get(frag->pool_id)),
+		net_buf_pool_get(frag->pool_id)->name,
+		get_frees(net_buf_pool_get(frag->pool_id)),
 		frag, frag->ref + 1, caller, line);
 #endif
 
@@ -803,7 +807,9 @@ void net_pkt_frag_unref(struct net_buf *frag)
 
 #if defined(CONFIG_NET_DEBUG_NET_PKT)
 	NET_DBG("%s (%s) [%d] frag %p ref %d (%s():%d)",
-		pool2str(frag->pool), frag->pool->name, get_frees(frag->pool),
+		pool2str(net_buf_pool_get(frag->pool_id)),
+		net_buf_pool_get(frag->pool_id)->name,
+		get_frees(net_buf_pool_get(frag->pool_id)),
 		frag, frag->ref - 1, caller, line);
 
 	if (frag->ref == 1) {
@@ -1013,6 +1019,48 @@ int net_frag_linear_copy(struct net_buf *dst, struct net_buf *src,
 	dst->len = copied;
 
 	return 0;
+}
+
+int net_frag_linearize(u8_t *dst, size_t dst_len, struct net_pkt *src,
+			 u16_t offset, u16_t len)
+{
+	struct net_buf *frag;
+	u16_t to_copy;
+	u16_t copied;
+
+	if (dst_len < (size_t)len) {
+		return -ENOMEM;
+	}
+
+	frag = src->frags;
+
+	/* find the right fragment to start copying from */
+	while (frag && offset >= frag->len) {
+		offset -= frag->len;
+		frag = frag->frags;
+	}
+
+	/* traverse the fragment chain until len bytes are copied */
+	copied = 0;
+	while (frag && len > 0) {
+		to_copy = min(len, frag->len - offset);
+		memcpy(dst + copied, frag->data + offset, to_copy);
+
+		copied += to_copy;
+
+		/* to_copy is always <= len */
+		len -= to_copy;
+		frag = frag->frags;
+
+		/* after the first iteration, this value will be 0 */
+		offset = 0;
+	}
+
+	if (len > 0) {
+		return -ENOMEM;
+	}
+
+	return copied;
 }
 
 bool net_pkt_compact(struct net_pkt *pkt)
@@ -1546,12 +1594,6 @@ int net_pkt_split(struct net_pkt *pkt, struct net_buf *orig_frag,
 		return 0;
 	}
 
-	if (len > net_buf_tailroom(*fragA)) {
-		NET_DBG("Length %u is larger than fragment size %zd",
-			len, net_buf_tailroom(*fragA));
-		return -EINVAL;
-	}
-
 	if (len > orig_frag->len) {
 		*fragA = net_pkt_get_frag(pkt, timeout);
 		if (!*fragA) {
@@ -1573,6 +1615,7 @@ int net_pkt_split(struct net_pkt *pkt, struct net_buf *orig_frag,
 	*fragB = net_pkt_get_frag(pkt, timeout);
 	if (!*fragB) {
 		net_pkt_frag_unref(*fragA);
+		*fragA = NULL;
 		return -ENOMEM;
 	}
 

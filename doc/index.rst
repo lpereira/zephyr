@@ -20,7 +20,7 @@ Zephyr Project Documentation
    ``https://www.zephyrproject.org/doc/<version>``. The following documentation
    versions are available:
 
-   `Zephyr 1.5.0`_ | `Zephyr 1.6.0`_ | `Zephyr 1.7.0`_
+   `Zephyr 1.5.0`_ | `Zephyr 1.6.0`_ | `Zephyr 1.7.0`_ | `Zephyr 1.8.0`_
 
 Sections
 ********
@@ -35,6 +35,7 @@ Sections
    application/application.rst
    porting/porting.rst
    drivers/drivers.rst
+   dts/device_tree.rst
    subsystems/subsystems.rst
    api/api.rst
    samples/samples.rst
@@ -44,7 +45,6 @@ Sections
    LICENSING.rst
    glossary.rst
 
-You can find further information on the `Zephyr Project Wiki`_.
 
 Indices and Tables
 ******************
@@ -53,7 +53,7 @@ Indices and Tables
 
 * :ref:`search`
 
-.. _Zephyr Project Wiki: https://wiki.zephyrproject.org/view/Main_Page
+.. _Zephyr 1.8.0: https://www.zephyrproject.org/doc/1.8.0/
 .. _Zephyr 1.7.0: https://www.zephyrproject.org/doc/1.7.0/
 .. _Zephyr 1.6.0: https://www.zephyrproject.org/doc/1.6.0/
 .. _Zephyr 1.5.0: https://www.zephyrproject.org/doc/1.5.0/

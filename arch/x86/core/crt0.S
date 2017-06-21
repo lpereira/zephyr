@@ -12,6 +12,7 @@
  */
 
 #include <arch/x86/asm.h>
+#include <kernel_arch_data.h>
 
 	/* exports (private APIs) */
 
@@ -33,7 +34,7 @@
 #endif
 
 #if defined(CONFIG_BOOT_TIME_MEASUREMENT)
-	GDATA(__start_tsc)
+	GDATA(__start_time_stamp)
 #endif
 
 #ifdef CONFIG_SYS_POWER_DEEP_SLEEP
@@ -83,6 +84,7 @@ SECTION_FUNC(TEXT_START, __start)
 	lidt	_Idt		/* load 32-bit operand size IDT */
 
 
+
 #ifdef CONFIG_SET_GDT
 	/* If we set our own GDT, update the segment registers as well.
 	 */
@@ -103,8 +105,8 @@ __csSet:
 	/*
 	 * Store rdtsc result from temporary regiter ESI & EDI into memory.
 	 */
-        mov  %esi, __start_tsc    	/* low  value */
-        mov  %edi, __start_tsc+4    	/* high value */
+        mov  %esi, __start_time_stamp  	/* low  value */
+        mov  %edi, __start_time_stamp+4    	/* high value */
 #endif
 
 #if !defined(CONFIG_FLOAT)
@@ -282,6 +284,25 @@ bssWords:
 	/* activate RAM-based Global Descriptor Table (GDT) */
 	lgdt	%ds:_gdt
 #endif
+
+#ifdef CONFIG_X86_MMU
+
+	/* load the page directory address into the registers*/
+	movl $__mmu_tables_start, %eax
+	movl %eax, %cr3
+
+	/*Set CR4.PAE = 0 (5th bit in CR4*/
+	movl %cr4, %eax
+	andl $CR4_PAE_DISABLE, %eax
+	movl %eax, %cr4
+
+	/* set CR0.PG bit (31st bit in CR0)*/
+	movl %cr0, %eax
+	orl $CR0_PAGING_ENABLE, %eax
+	movl %eax, %cr0
+
+#endif /* CONFIG_X86_MMU */
+
 
 	/* Jump to C portion of kernel initialization and never return */
 

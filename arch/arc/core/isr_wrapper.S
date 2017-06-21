@@ -15,7 +15,7 @@
 
 #include <offsets_short.h>
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <sw_isr_table.h>
 #include <kernel_structs.h>
 #include <arch/cpu.h>
@@ -26,9 +26,10 @@ GTEXT(_isr_demux)
 #if CONFIG_RGF_NUM_BANKS == 1
 GDATA(saved_r0)
 
-	.balign 4
 SECTION_VAR(BSS, saved_r0)
-        .word 0
+	.balign 4
+	.word 0
+
 #endif
 
 #if defined(CONFIG_SYS_POWER_MANAGEMENT)

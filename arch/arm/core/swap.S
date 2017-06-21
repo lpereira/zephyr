@@ -20,12 +20,7 @@
 _ASM_FILE_PROLOGUE
 
 GTEXT(__swap)
-#if defined(CONFIG_ARMV6_M)
-#elif defined(CONFIG_ARMV7_M)
 GTEXT(__svc)
-#else
-#error Unknown ARM architecture
-#endif /* CONFIG_ARMV6_M */
 GTEXT(__pendsv)
 GTEXT(_do_kernel_oops)
 GDATA(_k_neg_eagain)
@@ -48,12 +43,16 @@ GDATA(_kernel)
 SECTION_FUNC(TEXT, __pendsv)
 
 #ifdef CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
-	/* Register the context switch */
-	push {lr}
-	bl _sys_k_event_logger_context_switch
-	pop {r0}
-	mov lr, r0
-#endif
+    /* Register the context switch */
+    push {lr}
+    bl _sys_k_event_logger_context_switch
+#if defined(CONFIG_ARMV6_M)
+    pop {r0}
+    mov lr, r0
+#else
+    pop {lr}
+#endif /* CONFIG_ARMV6_M */
+#endif /* CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH  */
 
     /* load _kernel into r1 and current k_thread into r2 */
     ldr r1, =_kernel
@@ -168,6 +167,14 @@ _thread_irq_disabled:
     vldmia r0, {s16-s31}
 #endif
 
+#ifdef CONFIG_MPU_STACK_GUARD
+    /* r2 contains k_thread */
+    add r0, r2, #0
+    push {r2, lr}
+    blx configure_mpu_stack_guard
+    pop {r2, lr}
+#endif /* CONFIG_MPU_STACK_GUARD */
+
     /* load callee-saved + psp from thread */
     add r0, r2, #_thread_offset_to_callee_saved
     ldmia r0, {v1-v8, ip}
@@ -177,10 +184,73 @@ _thread_irq_disabled:
 
     msr PSP, ip
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+#if defined(CONFIG_ARMV6_M)
+    push {r3}
+#endif
+    push {lr}
+
+    bl read_systick_end_of_swap
+
+#if defined(CONFIG_ARMV6_M)
+    pop {r3}
+    mov lr,r3
+    pop {r3}
+#else
+    pop {lr}
+#endif
+#endif
+
     /* exc return */
     bx lr
 
 #if defined(CONFIG_ARMV6_M)
+SECTION_FUNC(TEXT, __svc)
+    /* Use EXC_RETURN state to find out if stack frame is on the
+     * MSP or PSP
+     */
+    ldr r0, =0x4
+    mov r1, lr
+    tst r1, r0
+    beq _stack_frame_msp
+    mrs r0, PSP
+    bne _stack_frame_endif
+_stack_frame_msp:
+    mrs r0, MSP
+_stack_frame_endif:
+
+    /* Figure out what SVC call number was invoked */
+    ldr r1, [r0, #24]   /* grab address of PC from stack frame */
+    /* SVC is a two-byte instruction, point to it and read  encoding */
+    subs r1, r1, #2
+    ldrb r1, [r1, #0]
+
+   /*
+    * grab service call number:
+    * 1: irq_offload (if configured)
+    * 2: kernel panic or oops (software generated fatal exception)
+    * Planned implementation of system calls for memory protection will
+    * expand this case.
+    */
+
+    cmp r1, #2
+    beq _oops
+
+#if CONFIG_IRQ_OFFLOAD
+    push {lr}
+    blx _irq_do_offload  /* call C routine which executes the offload */
+    pop {r3}
+    mov lr, r3
+#endif
+
+    /* exception return is done in _IntExit() */
+    b _IntExit
+
+_oops:
+    push {lr}
+    blx _do_kernel_oops
+    pop {pc}
+
 #elif defined(CONFIG_ARMV7_M)
 /**
  *
@@ -292,6 +362,20 @@ _oops:
 
 SECTION_FUNC(TEXT, __swap)
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+#if defined(CONFIG_ARMV6_M)
+    push {r3}
+#endif
+    push {lr}
+    bl read_systick_start_of_swap
+#if defined(CONFIG_ARMV6_M)
+    pop {r3}
+    mov lr,r3
+    pop {r3}
+#else
+    pop {lr}
+#endif
+#endif
     ldr r1, =_kernel
     ldr r2, [r1, #_kernel_offset_to_current]
     str r0, [r2, #_thread_offset_to_basepri]

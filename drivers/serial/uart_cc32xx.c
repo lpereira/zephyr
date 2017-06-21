@@ -202,7 +202,7 @@ static void uart_cc32xx_irq_rx_disable(struct device *dev)
 	MAP_UARTIntDisable((unsigned long)config->base, UART_INT_RX);
 }
 
-static int uart_cc32xx_irq_tx_empty(struct device *dev)
+static int uart_cc32xx_irq_tx_complete(struct device *dev)
 {
 	const struct uart_device_config *config = DEV_CFG(dev);
 
@@ -296,7 +296,7 @@ static const struct uart_driver_api uart_cc32xx_driver_api = {
 	.irq_tx_ready	  = uart_cc32xx_irq_tx_ready,
 	.irq_rx_enable	  = uart_cc32xx_irq_rx_enable,
 	.irq_rx_disable	  = uart_cc32xx_irq_rx_disable,
-	.irq_tx_empty	  = uart_cc32xx_irq_tx_empty,
+	.irq_tx_complete  = uart_cc32xx_irq_tx_complete,
 	.irq_rx_ready	  = uart_cc32xx_irq_rx_ready,
 	.irq_err_enable	  = uart_cc32xx_irq_err_enable,
 	.irq_err_disable  = uart_cc32xx_irq_err_disable,
@@ -306,7 +306,7 @@ static const struct uart_driver_api uart_cc32xx_driver_api = {
 #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
 };
 
-DEVICE_AND_API_INIT(uart_cc32xx_0, CONFIG_UART_CONSOLE_ON_DEV_NAME,
+DEVICE_AND_API_INIT(uart_cc32xx_0, CONFIG_UART_CC32XX_NAME,
 		    uart_cc32xx_init, &uart_cc32xx_dev_data_0,
 		    &uart_cc32xx_dev_cfg_0,
 		    PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,

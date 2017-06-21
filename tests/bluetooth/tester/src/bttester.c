@@ -19,7 +19,8 @@
 #include "bttester.h"
 
 #define STACKSIZE 2048
-static char __stack stack[STACKSIZE];
+static K_THREAD_STACK_DEFINE(stack, STACKSIZE);
+static struct k_thread cmd_thread;
 
 #define CMD_QUEUED 2
 static u8_t cmd_buf[CMD_QUEUED * BTP_MTU];
@@ -200,8 +201,8 @@ void tester_init(void)
 		k_fifo_put(&avail_queue, &cmd_buf[i * BTP_MTU]);
 	}
 
-	k_thread_spawn(stack, STACKSIZE, cmd_handler, NULL, NULL, NULL,
-		       K_PRIO_COOP(7), 0, K_NO_WAIT);
+	k_thread_create(&cmd_thread, stack, STACKSIZE, cmd_handler,
+			NULL, NULL, NULL, K_PRIO_COOP(7), 0, K_NO_WAIT);
 
 	uart_pipe_register(k_fifo_get(&avail_queue, K_NO_WAIT),
 			   BTP_MTU, recv_cb);

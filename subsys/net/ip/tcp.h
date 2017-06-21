@@ -128,8 +128,6 @@ struct net_tcp {
 	u32_t flags : 8;
 	/** Current TCP state */
 	u32_t state : 4;
-	/* A FIN packet has been queued for transmission */
-	u32_t fin_queued : 1;
 	/* An outbound FIN packet has been sent */
 	u32_t fin_sent : 1;
 	/* An inbound FIN packet has been received */
@@ -140,7 +138,7 @@ struct net_tcp {
 	 */
 	u32_t ack_timer_cancelled : 1;
 	/** Remaining bits in this u32_t */
-	u32_t _padding : 11;
+	u32_t _padding : 12;
 
 	/** Accept callback to be called when the connection has been
 	 * established.
@@ -337,6 +335,16 @@ static inline enum net_tcp_state net_tcp_get_state(const struct net_tcp *tcp)
 {
 	return (enum net_tcp_state)tcp->state;
 }
+
+/**
+ * @brief Check if the sequence number is valid i.e., it is inside the window.
+ *
+ * @param tcp TCP context
+ * @param pkt Network packet
+ *
+ * @return true if network packet sequence number is valid, false otherwise
+ */
+bool net_tcp_validate_seq(struct net_tcp *tcp, struct net_pkt *pkt);
 
 #if defined(CONFIG_NET_TCP)
 void net_tcp_init(void);

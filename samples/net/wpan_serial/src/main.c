@@ -42,12 +42,14 @@ enum slip_state {
 
 /* RX queue */
 static struct k_fifo rx_queue;
-static char __noinit __stack rx_stack[1024];
+static K_THREAD_STACK_DEFINE(rx_stack, 1024);
+static struct k_thread rx_thread_data;
 
 /* TX queue */
 static struct k_sem tx_sem;
 static struct k_fifo tx_queue;
-static char __noinit __stack tx_stack[1024];
+static K_THREAD_STACK_DEFINE(tx_stack, 1024);
+static struct k_thread tx_thread_data;
 
 /* Buffer for SLIP encoded data for the worst case */
 static u8_t slip_buf[1 + 2 * CONFIG_NET_BUF_DATA_SIZE];
@@ -470,8 +472,10 @@ static void init_rx_queue(void)
 {
 	k_fifo_init(&rx_queue);
 
-	k_thread_spawn(rx_stack, sizeof(rx_stack), (k_thread_entry_t)rx_thread,
-		       NULL, NULL, NULL, K_PRIO_COOP(8), 0, K_NO_WAIT);
+	k_thread_create(&rx_thread_data, rx_stack,
+			K_THREAD_STACK_SIZEOF(rx_stack),
+			(k_thread_entry_t)rx_thread,
+			NULL, NULL, NULL, K_PRIO_COOP(8), 0, K_NO_WAIT);
 }
 
 static void init_tx_queue(void)
@@ -479,8 +483,10 @@ static void init_tx_queue(void)
 	k_sem_init(&tx_sem, 0, UINT_MAX);
 	k_fifo_init(&tx_queue);
 
-	k_thread_spawn(tx_stack, sizeof(tx_stack), (k_thread_entry_t)tx_thread,
-		       NULL, NULL, NULL, K_PRIO_COOP(8), 0, K_NO_WAIT);
+	k_thread_create(&tx_thread_data, tx_stack,
+			K_THREAD_STACK_SIZEOF(tx_stack),
+			(k_thread_entry_t)tx_thread,
+			NULL, NULL, NULL, K_PRIO_COOP(8), 0, K_NO_WAIT);
 }
 
 /**

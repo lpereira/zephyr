@@ -16,6 +16,7 @@
 #include <zephyr/types.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <net/net_ip.h>
 
 #include <misc/slist.h>
 
@@ -392,8 +393,8 @@ struct zoap_pending *zoap_pending_received(
 	struct zoap_pending *pendings, size_t len);
 
 /**
- * @brief After a response is received, clear all pending
- * retransmissions related to that response.
+ * @brief After a response is received, call zoap_reply_t handler
+ * registered in #zoap_reply structure
  *
  * @param response A response received
  * @param from Address from which the response was received
@@ -443,7 +444,7 @@ void zoap_pending_clear(struct zoap_pending *pending);
  * @brief Cancels awaiting for this reply, so it becomes available
  * again.
  *
- * @param reply The reply to be cancelled
+ * @param reply The reply to be canceled
  */
 void zoap_reply_clear(struct zoap_reply *reply);
 
@@ -511,7 +512,7 @@ int zoap_packet_set_used(struct zoap_packet *zpkt, u16_t len);
 /**
  * @brief Adds an option to the packet.
  *
- * Note: ptions must be added in numeric order of their codes.
+ * Note: options must be added in numeric order of their codes.
  *
  * @param zpkt Packet to be updated
  * @param code Option code to add to the packet, see #zoap_option_num

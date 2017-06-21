@@ -55,7 +55,7 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 	case _NANO_ERR_INVALID_TASK_EXIT:
 		printk("***** Invalid Exit Software Error! *****\n");
 		break;
-#if defined(CONFIG_STACK_CANARIES)
+#if defined(CONFIG_STACK_CANARIES) || defined(CONFIG_STACK_SENTINEL)
 	case _NANO_ERR_STACK_CHK_FAIL:
 		printk("***** Stack Check Fail! *****\n");
 		break;
@@ -90,6 +90,7 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 	 */
 	_SysFatalErrorHandler(reason, pEsf);
 }
+
 
 #ifdef CONFIG_PRINTK
 static char *cause_str(unsigned int cause_code)
@@ -198,8 +199,21 @@ FUNC_NORETURN void ReservedInterruptHandler(unsigned int intNo)
 	_NanoFatalErrorHandler(_NANO_ERR_RESERVED_IRQ, &_default_esf);
 }
 
-/* Implemented in Xtensa HAL */
-extern FUNC_NORETURN void exit(int exit_code);
+void exit(int return_code)
+{
+#ifdef XT_SIMULATOR
+	__asm__ (
+	    "mov a3, %[code]\n\t"
+	    "movi a2, %[call]\n\t"
+	    "simcall\n\t"
+	    :
+	    : [code] "r" (return_code), [call] "i" (SYS_exit)
+	    : "a3", "a2");
+#else
+	printk("exit(%d)\n", return_code);
+	k_panic();
+#endif
+}
 
 /**
  *
@@ -221,12 +235,17 @@ extern FUNC_NORETURN void exit(int exit_code);
  *
  * @return N/A
  */
-FUNC_NORETURN void _SysFatalErrorHandler(unsigned int reason,
+FUNC_NORETURN __weak void _SysFatalErrorHandler(unsigned int reason,
 					 const NANO_ESF *pEsf)
 {
 	ARG_UNUSED(pEsf);
 
 #if !defined(CONFIG_SIMPLE_FATAL_ERROR_HANDLER)
+#ifdef CONFIG_STACK_SENTINEL
+	if (reason == _NANO_ERR_STACK_CHK_FAIL) {
+		goto hang_system;
+	}
+#endif
 	if (reason == _NANO_ERR_KERNEL_PANIC) {
 		goto hang_system;
 	}

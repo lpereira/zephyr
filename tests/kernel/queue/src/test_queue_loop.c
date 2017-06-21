@@ -36,7 +36,8 @@
 static qdata_t data[LIST_LEN];
 static qdata_t data_p[LIST_LEN];
 static struct k_queue queue;
-static char __noinit __stack tstack[STACK_SIZE];
+static K_THREAD_STACK_DEFINE(tstack, STACK_SIZE);
+static struct k_thread tdata;
 static struct k_sem end_sema;
 
 static void tqueue_append(struct k_queue *pqueue)
@@ -95,9 +96,9 @@ static void tqueue_read_write(struct k_queue *pqueue)
 {
 	k_sem_init(&end_sema, 0, 1);
 	/**TESTPOINT: thread-isr-thread data passing via queue*/
-	k_tid_t tid = k_thread_spawn(tstack, STACK_SIZE,
-		tThread_entry, pqueue, NULL, NULL,
-		K_PRIO_PREEMPT(0), 0, 0);
+	k_tid_t tid = k_thread_create(&tdata, tstack, STACK_SIZE,
+				      tThread_entry, pqueue, NULL, NULL,
+				      K_PRIO_PREEMPT(0), 0, 0);
 
 	TC_PRINT("main queue append ---> ");
 	tqueue_append(pqueue);

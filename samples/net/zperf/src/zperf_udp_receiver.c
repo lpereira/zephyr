@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <sections.h>
+#include <linker/sections.h>
 #include <toolchain.h>
 
 #include <zephyr.h>
@@ -28,7 +28,8 @@
 #define MY_SRC_PORT 50001
 
 /* Static data */
-static char __noinit __stack zperf_rx_stack[RX_THREAD_STACK_SIZE];
+static K_THREAD_STACK_DEFINE(zperf_rx_stack, RX_THREAD_STACK_SIZE);
+static struct k_thread zperf_rx_thread_data;
 
 static struct sockaddr_in6 *in6_addr_my;
 static struct sockaddr_in *in4_addr_my;
@@ -383,8 +384,9 @@ void zperf_receiver_init(int port)
 	in4_addr_my = zperf_get_sin();
 #endif
 
-	k_thread_spawn(zperf_rx_stack, sizeof(zperf_rx_stack),
-		       (k_thread_entry_t)zperf_rx_thread,
-		       INT_TO_POINTER(port), 0, 0,
-		       K_PRIO_COOP(7), 0, K_NO_WAIT);
+	k_thread_create(&zperf_rx_thread_data, zperf_rx_stack,
+			K_THREAD_STACK_SIZEOF(zperf_rx_stack),
+			(k_thread_entry_t)zperf_rx_thread,
+			INT_TO_POINTER(port), 0, 0,
+			K_PRIO_COOP(7), 0, K_NO_WAIT);
 }

@@ -138,7 +138,7 @@ typedef struct _slist sys_slist_t;
 
 /**
  * @brief Provide the primitive to iterate on a list under a container
- * Note: the loop is unsafe and thus __cn should not be dettached
+ * Note: the loop is unsafe and thus __cn should not be detached
  *
  * User _MUST_ add the loop statement curly braces enclosing its own code:
  *
@@ -156,7 +156,7 @@ typedef struct _slist sys_slist_t;
 
 /**
  * @brief Provide the primitive to safely iterate on a list under a container
- * Note: __cn can be dettached, it will not break the loop.
+ * Note: __cn can be detached, it will not break the loop.
  *
  * User _MUST_ add the loop statement curly braces enclosing its own code:
  *
@@ -414,8 +414,10 @@ static inline void sys_slist_remove(sys_slist_t *list,
  *
  * @param list A pointer on the list to affect
  * @param node A pointer on the node to remove from the list
+ *
+ * @return true if node was removed
  */
-static inline void sys_slist_find_and_remove(sys_slist_t *list,
+static inline bool sys_slist_find_and_remove(sys_slist_t *list,
 					     sys_snode_t *node)
 {
 	sys_snode_t *prev = NULL;
@@ -424,11 +426,13 @@ static inline void sys_slist_find_and_remove(sys_slist_t *list,
 	SYS_SLIST_FOR_EACH_NODE(list, test) {
 		if (test == node) {
 			sys_slist_remove(list, prev, node);
-			break;
+			return true;
 		}
 
 		prev = test;
 	}
+
+	return false;
 }
 
 

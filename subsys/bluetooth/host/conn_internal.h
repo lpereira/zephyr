@@ -24,6 +24,8 @@ enum {
 	BT_CONN_BR_NOBOND,		/* SSP no bond pairing tracker */
 	BT_CONN_BR_PAIRING_INITIATOR,	/* local host starts authentication */
 	BT_CONN_CLEANUP,                /* Disconnected, pending cleanup */
+	BT_CONN_AUTO_PHY_UPDATE,        /* Auto-update PHY */
+	BT_CONN_AUTO_DATA_LEN,          /* Auto data len change in progress */
 
 	/* Total number of flags - must be at the end of the enum */
 	BT_CONN_NUM_FLAGS,
@@ -42,7 +44,7 @@ struct bt_conn_le {
 	u16_t			latency;
 	u16_t			timeout;
 
-	u8_t			features[1][8];
+	u8_t			features[8];
 
 	struct bt_keys		*keys;
 

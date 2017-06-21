@@ -12,19 +12,31 @@ int ll_init(struct k_sem *sem_rx);
 void ll_reset(void);
 u8_t *ll_addr_get(u8_t addr_type, u8_t *p_bdaddr);
 void ll_addr_set(u8_t addr_type, u8_t const *const p_bdaddr);
-void ll_adv_params_set(u16_t interval, u8_t adv_type,
-		       u8_t own_addr_type, u8_t direct_addr_type,
-		       u8_t const *const p_direct_addr, u8_t chl_map,
-		       u8_t filter_policy);
+
+#if defined(CONFIG_BLUETOOTH_CONTROLLER_ADV_EXT)
+u32_t ll_adv_params_set(u8_t handle, u16_t evt_prop, u32_t interval,
+			u8_t adv_type, u8_t own_addr_type,
+			u8_t direct_addr_type, u8_t const *const direct_addr,
+			u8_t chl_map, u8_t filter_policy, u8_t *tx_pwr,
+			u8_t phy_p, u8_t skip, u8_t phy_s, u8_t sid, u8_t sreq);
+#else /* !CONFIG_BLUETOOTH_CONTROLLER_ADV_EXT */
+u32_t ll_adv_params_set(u16_t interval, u8_t adv_type,
+			u8_t own_addr_type, u8_t direct_addr_type,
+			u8_t const *const direct_addr, u8_t chl_map,
+			u8_t filter_policy);
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_ADV_EXT */
+
 void ll_adv_data_set(u8_t len, u8_t const *const p_data);
 void ll_scan_data_set(u8_t len, u8_t const *const p_data);
 u32_t ll_adv_enable(u8_t enable);
-void ll_scan_params_set(u8_t scan_type, u16_t interval, u16_t window,
-			u8_t own_addr_type, u8_t filter_policy);
+u32_t ll_scan_params_set(u8_t type, u16_t interval, u16_t window,
+			 u8_t own_addr_type, u8_t filter_policy);
 u32_t ll_scan_enable(u8_t enable);
-void ll_filter_clear(void);
-u32_t ll_filter_add(u8_t addr_type, u8_t *addr);
-u32_t ll_filter_remove(u8_t addr_type, u8_t *addr);
+
+u32_t ll_wl_size_get(void);
+u32_t ll_wl_clear(void);
+u32_t ll_wl_add(bt_addr_le_t *addr);
+u32_t ll_wl_remove(bt_addr_le_t *addr);
 
 void ll_irk_clear(void);
 u32_t ll_irk_add(u8_t *irk);
@@ -54,5 +66,11 @@ u32_t ll_length_default_set(u16_t max_tx_octets, u16_t max_tx_time);
 void ll_length_max_get(u16_t *max_tx_octets, u16_t *max_tx_time,
 		       u16_t *max_rx_octets, u16_t *max_rx_time);
 #endif /* CONFIG_BLUETOOTH_CONTROLLER_DATA_LENGTH */
+
+#if defined(CONFIG_BLUETOOTH_CONTROLLER_PHY)
+u32_t ll_phy_get(u16_t handle, u8_t *tx, u8_t *rx);
+u32_t ll_phy_default_set(u8_t tx, u8_t rx);
+u32_t ll_phy_req_send(u16_t handle, u8_t tx, u8_t flags, u8_t rx);
+#endif /* CONFIG_BLUETOOTH_CONTROLLER_PHY */
 
 #endif /* _LL_H_ */

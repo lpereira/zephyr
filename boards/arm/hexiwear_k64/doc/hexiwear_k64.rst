@@ -9,7 +9,7 @@ Overview
 Hexiwear is powered by a Kinetis K64 microcontroller based on the ARM Cortex-M4
 core. Another Kinetis wireless MCU, the KW40Z, provides Bluetooth Low Energy
 connectivity. Hexiwear also integrates a wide variety of sensors, as well as a
-user interface consisting of a 1.1” 96px x 96px full color OLED display and six
+user interface consisting of a 1.1" 96px x 96px full color OLED display and six
 capacitive buttons with haptic feedback.
 
 - Eye-catching Smart Watch form factor with powerful, low power Kinetis K6x MCU
@@ -17,7 +17,7 @@ capacitive buttons with haptic feedback.
 - Designed for wearable applications with the onboard rechargeable battery,
   OLED screen and onboard sensors such as optical heart rate, accelerometer,
   magnetometer and gyroscope.
-- Designed for IoT end node applications with the onboard sensor’s such as
+- Designed for IoT end node applications with the onboard sensor's such as
   temperature, pressure, humidity and ambient light.
 - Flexibility to let you add the sensors of your choice nearly 200 additional
   sensors through click boards.
@@ -39,7 +39,7 @@ Hardware
 - Li-Ion/Li-Po Battery Charger NXP MC34671
 - Optical heart rate sensor Maxim MAX30101
 - Ambient Light sensor, Humidity and Temperature sensor
-- 1.1” full color OLED display
+- 1.1" full color OLED display
 - Haptic feedback engine
 - 190 mAh 2C Li-Po battery
 - Capacitive touch interface
@@ -144,75 +144,87 @@ HCI, and the remaining are not used.
 Programming and Debugging
 *************************
 
+The Hexiwear docking station includes the :ref:`nxp_opensda` serial and debug
+adapter built into the board to provide debugging, flash programming, and
+serial communication over USB.
+
+To use the pyOCD tools with OpenSDA, follow the instructions in the
+:ref:`nxp_opensda_pyocd` page using the `DAPLink Hexiwear Firmware`_.
+
+To use the Segger J-Link tools with OpenSDA, follow the instructions in the
+:ref:`nxp_opensda_jlink` page using the `Segger J-Link OpenSDA V2.1 Firmware`_.
+
+.. note::
+   The OpenSDA adapter is shared between the K64 and the KW40Z via switches,
+   therefore only one SoC can be flashed, debugged, or have an open console at
+   a time.
+
+Configure the docking station switches to route the desired SoC signals to the
+OpenSDA adapter:
+
++--------+-------------+-------+-----+
+| Switch | Signal      | KW40Z | K64 |
++========+=============+=======+=====+
+| 1      | MK64 SWDIO  | OFF   | ON  |
++--------+-------------+-------+-----+
+| 2      | MK64 RST    | OFF   | ON  |
++--------+-------------+-------+-----+
+| 3      | MKW40 RST   | ON    | OFF |
++--------+-------------+-------+-----+
+| 4      | MKW40 SWDIO | ON    | OFF |
++--------+-------------+-------+-----+
+| 5      | OSDA        | ON    | ON  |
++--------+-------------+-------+-----+
+| 6      | LED1        | OFF   | OFF |
++--------+-------------+-------+-----+
+| 7      | LED2        | OFF   | OFF |
++--------+-------------+-------+-----+
+| 8      | LED3        | OFF   | OFF |
++--------+-------------+-------+-----+
+
 Flashing
 ========
 
-The Hexiwear docking station includes an `OpenSDA`_ serial and debug adaptor
-built into the board. The adaptor provides:
+This example uses the :ref:`hello_world` sample with the
+:ref:`nxp_opensda_pyocd` tools. Use the ``make flash`` build target to build
+your Zephyr application, invoke the pyOCD flash tool and program your Zephyr
+application to flash.
 
-- A USB connection to the host computer, which exposes a Mass Storage and an
-  USB Serial Port.
-- A Serial Flash device, which implements the USB flash disk file storage.
-- A physical UART connection which is relayed over interface USB Serial port.
+.. code-block:: console
 
-.. note::
-   The OpenSDA is shared between the K64 and the KW40Z via switches, therefore
-   only one SoC can be flashed, debugged, or have an open console at a time.
+   $ cd <zephyr_root_path>
+   $ . zephyr-env.sh
+   $ cd samples/hello_world/
+   $ make BOARD=hexiwear_k64 FLASH_SCRIPT=pyocd.sh flash
 
-Flashing an application to Hexiwear
------------------------------------
+Open a serial terminal (minicom, putty, etc.) with the following settings:
 
-#. Build the Zephyr kernel and application:
+- Speed: 115200
+- Data: 8 bits
+- Parity: None
+- Stop bits: 1
 
-   .. code-block:: console
+Reset the board and you should be able to see on the corresponding Serial Port
+the following message:
 
-      $ cd $ZEPHYR_BASE
-      $ . zephyr-env.sh
-      $ cd $ZEPHYR_BASE/samples/hello_world/
-      $ make BOARD=hexiwear_k64
+.. code-block:: console
 
-#. Make sure the docking station USB cable is unplugged.
-#. Attach the Hexiwear board to the docking station.
-#. Configure the docking station switches to route the desired SoC signals to
-   the OpenSDA circuit:
+   Hello World! arm
 
-   +--------+-------------+-------+-----+
-   | Switch | Signal      | KW40Z | K64 |
-   +========+=============+=======+=====+
-   | 1      | MK64 SWDIO  | OFF   | ON  |
-   +--------+-------------+-------+-----+
-   | 2      | MK64 RST    | OFF   | ON  |
-   +--------+-------------+-------+-----+
-   | 3      | MKW40 RST   | ON    | OFF |
-   +--------+-------------+-------+-----+
-   | 4      | MKW40 SWDIO | ON    | OFF |
-   +--------+-------------+-------+-----+
-   | 5      | OSDA        | ON    | ON  |
-   +--------+-------------+-------+-----+
-   | 6      | LED1        | OFF   | OFF |
-   +--------+-------------+-------+-----+
-   | 7      | LED2        | OFF   | OFF |
-   +--------+-------------+-------+-----+
-   | 8      | LED3        | OFF   | OFF |
-   +--------+-------------+-------+-----+
+Debugging
+=========
 
-#. Attach the USB cable and make sure the power switch is ON. A USB Mass
-   Storage Device called DAPLINK will enumerate.
-#. Copy the application binary ``zephyr.bin`` to the DAPLINK drive. The drive
-   will temporarily disappear, then reappear after several seconds.
-#. Open a serial terminal (minicom, putty, etc.) with the following settings:
+This example uses the :ref:`hello_world` sample with the
+:ref:`nxp_opensda_pyocd` tools. Use the ``make debug`` build target to build
+your Zephyr application, invoke the pyOCD GDB server, attach a GDB client, and
+program your Zephyr application to flash. It will leave you at a gdb prompt.
 
-   - Speed: 115200
-   - Data: 8 bits
-   - Parity: None
-   - Stop bits: 1
+.. code-block:: console
 
-#. Reset the SoC. Each SoC has a reset button on docking station. You should
-   see the following message on the Serial Port:
-
-  .. code-block:: console
-
-     Hello World! arm
+   $ cd <zephyr_root_path>
+   $ . zephyr-env.sh
+   $ cd samples/hello_world/
+   $ make BOARD=hexiwear_k64 DEBUG_SCRIPT=pyocd.sh debug
 
 Using Bluetooth
 ***************
@@ -264,9 +276,6 @@ will then see a plot of the heart rate data that updates once per second.
 .. _Hexiwear Schematics:
    http://cdn-docs.mikroe.com/images/c/c0/Sch_Hexiwear_MainBoard_v106c.pdf
 
-.. _OpenSDA:
-   http://www.nxp.com/products/software-and-tools/hardware-development-tools/startertrak-development-boards/opensda-serial-and-debug-adapter:OPENSDA
-
 .. _K64F Website:
    http://www.nxp.com/products/microcontrollers-and-processors/arm-processors/kinetis-cortex-m-mcus/k-series-performance-m4/k6x-ethernet/kinetis-k64-120-mhz-256kb-sram-microcontrollers-mcus-based-on-arm-cortex-m4-core:K64_120
 
@@ -275,6 +284,12 @@ will then see a plot of the heart rate data that updates once per second.
 
 .. _K64F Reference Manual:
    http://www.nxp.com/assets/documents/data/en/reference-manuals/K64P144M120SF5RM.pdf
+
+.. _DAPLink Hexiwear Firmware:
+   https://github.com/MikroElektronika/HEXIWEAR/blob/master/HW/HEXIWEAR_DockingStation/HEXIWEAR_DockingStation_DAPLINK_FW.bin
+
+.. _Segger J-Link OpenSDA V2.1 Firmware:
+   https://www.segger.com/downloads/jlink/OpenSDA_V2_1.bin
 
 .. _KW40Z Connectivity Software:
    https://www.nxp.com/webapp/Download?colCode=KW40Z-CONNECTIVITY-SOFTWARE&appType=license&location=null&fpsp=1&WT_TYPE=Protocol%20Stacks&WT_VENDOR=FREESCALE&WT_FILE_FORMAT=exe&WT_ASSET=Downloads&fileExt=.exe&Parent_nodeId=1432854896956716810497&Parent_pageType=product

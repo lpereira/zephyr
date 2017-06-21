@@ -14,13 +14,14 @@
 #include <misc/byteorder.h>
 #include <misc/util.h>
 
-#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_ATT)
-#include <bluetooth/log.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/hci_driver.h>
+
+#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_ATT)
+#include "common/log.h"
 
 #include "hci_core.h"
 #include "conn_internal.h"
@@ -42,6 +43,7 @@
 						BT_GATT_PERM_WRITE_ENCRYPT)
 #define BT_GATT_PERM_AUTHEN_MASK		(BT_GATT_PERM_READ_AUTHEN | \
 						BT_GATT_PERM_WRITE_AUTHEN)
+#define ATT_CMD_MASK				0x40
 
 #define ATT_TIMEOUT				K_SECONDS(30)
 
@@ -95,6 +97,8 @@ static struct bt_att bt_req_pool[CONFIG_BLUETOOTH_MAX_CONN];
 
 static void att_req_destroy(struct bt_att_req *req)
 {
+	BT_DBG("req %p", req);
+
 	if (req->buf) {
 		net_buf_unref(req->buf);
 	}
@@ -146,12 +150,14 @@ static void att_req_sent(struct bt_conn *conn)
 {
 	struct bt_att *att = att_get(conn);
 
-	BT_DBG("conn %p att %p", conn, att);
+	BT_DBG("conn %p att %p att->req %p", conn, att, att->req);
 
 	k_sem_give(&att->tx_sem);
 
 	/* Start timeout work */
-	k_delayed_work_submit(&att->timeout_work, ATT_TIMEOUT);
+	if (att->req) {
+		k_delayed_work_submit(&att->timeout_work, ATT_TIMEOUT);
+	}
 }
 
 static void att_pdu_sent(struct bt_conn *conn)
@@ -291,17 +297,19 @@ static void att_process(struct bt_att *att)
 	att_send_req(att, ATT_REQ(node));
 }
 
-static u8_t att_handle_rsp(struct bt_att *att, void *pdu, u16_t len,
-			      u8_t err)
+static u8_t att_handle_rsp(struct bt_att *att, void *pdu, u16_t len, u8_t err)
 {
 	bt_att_func_t func;
 
-	if (!att->req) {
-		goto process;
-	}
+	BT_DBG("err %u len %u: %s", err, len, bt_hex(pdu, len));
 
 	/* Cancel timeout if ongoing */
 	k_delayed_work_cancel(&att->timeout_work);
+
+	if (!att->req) {
+		BT_WARN("No pending ATT request");
+		goto process;
+	}
 
 	/* Release original buffer */
 	if (att->req->buf) {
@@ -1825,6 +1833,10 @@ static att_type_t att_op_get_type(u8_t op)
 		}
 	}
 
+	if (op & ATT_CMD_MASK) {
+		return ATT_COMMAND;
+	}
+
 	return ATT_UNKNOWN;
 }
 
@@ -1854,6 +1866,10 @@ static void bt_att_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
 
 	if (!handler) {
 		BT_WARN("Unknown ATT code 0x%02x", hdr->code);
+		if (att_op_get_type(hdr->code) != ATT_COMMAND) {
+			send_err_rsp(chan->conn, hdr->code, 0,
+				     BT_ATT_ERR_NOT_SUPPORTED);
+		}
 		return;
 	}
 
@@ -2116,6 +2132,8 @@ void bt_att_init(void)
 	};
 
 	bt_l2cap_le_fixed_chan_register(&chan);
+
+	bt_gatt_init();
 }
 
 u16_t bt_att_get_mtu(struct bt_conn *conn)
@@ -2153,6 +2171,8 @@ int bt_att_send(struct bt_conn *conn, struct net_buf *buf)
 	}
 
 	hdr = (void *)buf->data;
+
+	BT_DBG("code 0x%02x", hdr->code);
 
 	if (hdr->code == BT_ATT_OP_SIGNED_WRITE_CMD) {
 		int err;
@@ -2198,6 +2218,8 @@ int bt_att_req_send(struct bt_conn *conn, struct bt_att_req *req)
 void bt_att_req_cancel(struct bt_conn *conn, struct bt_att_req *req)
 {
 	struct bt_att *att;
+
+	BT_DBG("req %p", req);
 
 	if (!conn || !req) {
 		return;

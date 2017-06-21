@@ -60,11 +60,39 @@ void radio_reset(void)
 	     RADIO_POWER_POWER_Msk);
 }
 
-void radio_phy_set(u8_t phy)
+void radio_phy_set(u8_t phy, u8_t flags)
 {
-	NRF_RADIO->MODE =
-	    (((phy) ? (u32_t)phy : RADIO_MODE_MODE_Ble_1Mbit) <<
-	     RADIO_MODE_MODE_Pos) & RADIO_MODE_MODE_Msk;
+	u32_t mode;
+
+	switch (phy) {
+	case BIT(0):
+	default:
+		mode = RADIO_MODE_MODE_Ble_1Mbit;
+		break;
+
+#if defined(CONFIG_SOC_SERIES_NRF51X)
+	case BIT(1):
+		mode = RADIO_MODE_MODE_Nrf_2Mbit;
+		break;
+
+#elif defined(CONFIG_SOC_SERIES_NRF52X)
+	case BIT(1):
+		mode = RADIO_MODE_MODE_Ble_2Mbit;
+		break;
+
+#if defined(CONFIG_SOC_NRF52840)
+	case BIT(2):
+		if (flags & 0x01) {
+			mode = RADIO_MODE_MODE_Ble_LR125Kbit;
+		} else {
+			mode = RADIO_MODE_MODE_Ble_LR500Kbit;
+		}
+		break;
+#endif /* CONFIG_SOC_NRF52840 */
+#endif /* CONFIG_SOC_SERIES_NRF52X */
+	}
+
+	NRF_RADIO->MODE = (mode << RADIO_MODE_MODE_Pos) & RADIO_MODE_MODE_Msk;
 }
 
 void radio_tx_power_set(u32_t power)
@@ -96,22 +124,45 @@ void radio_aa_set(u8_t *aa)
 
 void radio_pkt_configure(u8_t bits_len, u8_t max_len, u8_t flags)
 {
-	u8_t p16 = (flags >> 1) & 0x01; /* 16-bit preamble */
 	u8_t dc = flags & 0x01; /* Adv or Data channel */
 	u32_t extra;
+	u8_t phy;
 
 #if defined(CONFIG_SOC_SERIES_NRF51X)
-	ARG_UNUSED(p16);
+	ARG_UNUSED(phy);
 
 	extra = 0;
 
 	/* nRF51 supports only 27 byte PDU when using h/w CCM for encryption. */
-	if (dc) {
+	if (!IS_ENABLED(CONFIG_BLUETOOTH_CONTROLLER_DATA_LENGTH_CLEAR) && dc) {
 		bits_len = 5;
 	}
-#else /* !CONFIG_SOC_SERIES_NRF51X */
-	extra = (((p16) ? RADIO_PCNF0_PLEN_16bit : RADIO_PCNF0_PLEN_8bit) <<
-		 RADIO_PCNF0_PLEN_Pos) & RADIO_PCNF0_PLEN_Msk;
+#elif defined(CONFIG_SOC_SERIES_NRF52X)
+	extra = 0;
+
+	phy = (flags >> 1) & 0x07; /* phy */
+	switch (phy) {
+	case BIT(0):
+	default:
+		extra |= (RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos) &
+			 RADIO_PCNF0_PLEN_Msk;
+		break;
+
+	case BIT(1):
+		extra |= (RADIO_PCNF0_PLEN_16bit << RADIO_PCNF0_PLEN_Pos) &
+			 RADIO_PCNF0_PLEN_Msk;
+		break;
+
+#if defined(CONFIG_SOC_NRF52840)
+	case BIT(2):
+		extra |= (RADIO_PCNF0_PLEN_LongRange << RADIO_PCNF0_PLEN_Pos) &
+			 RADIO_PCNF0_PLEN_Msk;
+		extra |= (2UL << RADIO_PCNF0_CILEN_Pos) & RADIO_PCNF0_CILEN_Msk;
+		extra |= (3UL << RADIO_PCNF0_TERMLEN_Pos) &
+			 RADIO_PCNF0_TERMLEN_Msk;
+		break;
+#endif /* CONFIG_SOC_NRF52840 */
+	}
 
 	/* To use same Data Channel PDU structure with nRF5 specific overhead
 	 * byte, include the S1 field in radio packet configuration.
@@ -120,7 +171,7 @@ void radio_pkt_configure(u8_t bits_len, u8_t max_len, u8_t flags)
 		extra |= (RADIO_PCNF0_S1INCL_Include <<
 			  RADIO_PCNF0_S1INCL_Pos) & RADIO_PCNF0_S1INCL_Msk;
 	}
-#endif /* !CONFIG_SOC_SERIES_NRF51X */
+#endif /* CONFIG_SOC_SERIES_NRF52X */
 
 	NRF_RADIO->PCNF0 = (((1UL) << RADIO_PCNF0_S0LEN_Pos) &
 			    RADIO_PCNF0_S0LEN_Msk) |
@@ -180,17 +231,17 @@ void radio_status_reset(void)
 
 u32_t radio_is_ready(void)
 {
-	return NRF_RADIO->EVENTS_READY;
+	return (NRF_RADIO->EVENTS_READY != 0);
 }
 
 u32_t radio_is_done(void)
 {
-	return NRF_RADIO->EVENTS_END;
+	return (NRF_RADIO->EVENTS_END != 0);
 }
 
 u32_t radio_has_disabled(void)
 {
-	return NRF_RADIO->EVENTS_DISABLED;
+	return (NRF_RADIO->EVENTS_DISABLED != 0);
 }
 
 u32_t radio_is_idle(void)
@@ -211,7 +262,7 @@ void radio_crc_configure(u32_t polynomial, u32_t iv)
 
 u32_t radio_crc_is_valid(void)
 {
-	return NRF_RADIO->CRCSTATUS;
+	return (NRF_RADIO->CRCSTATUS != 0);
 }
 
 static u8_t MALIGN(4) _pkt_empty[PDU_EM_SIZE_MAX];
@@ -229,24 +280,67 @@ void *radio_pkt_scratch_get(void)
 	return _pkt_scratch;
 }
 
+#if !defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+static u8_t sw_tifs_toggle;
+
+static void sw_switch(u8_t dir)
+{
+	u8_t ppi = 12 + sw_tifs_toggle;
+
+	NRF_PPI->CH[11].EEP = (u32_t)&(NRF_RADIO->EVENTS_END);
+	NRF_PPI->CH[11].TEP = (u32_t)&(NRF_PPI->TASKS_CHG[sw_tifs_toggle].EN);
+	NRF_PPI->CHENSET = PPI_CHEN_CH11_Msk;
+
+	NRF_PPI->CH[ppi].EEP = (u32_t)
+			       &(NRF_TIMER1->EVENTS_COMPARE[sw_tifs_toggle]);
+	if (dir) {
+		NRF_TIMER1->CC[sw_tifs_toggle] -= RADIO_TX_READY_DELAY_US +
+						  RADIO_TX_CHAIN_DELAY_US;
+		NRF_PPI->CH[ppi].TEP = (u32_t)&(NRF_RADIO->TASKS_TXEN);
+	} else {
+		NRF_TIMER1->CC[sw_tifs_toggle] -= RADIO_RX_READY_DELAY_US;
+		NRF_PPI->CH[ppi].TEP = (u32_t)&(NRF_RADIO->TASKS_RXEN);
+	}
+
+	sw_tifs_toggle += 1;
+	sw_tifs_toggle &= 1;
+}
+#endif /* CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
+
 void radio_switch_complete_and_rx(void)
 {
-	NRF_RADIO->SHORTS =
-	    (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk |
-	     RADIO_SHORTS_DISABLED_RXEN_Msk);
+#if defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+	NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk |
+			    RADIO_SHORTS_END_DISABLE_Msk |
+			    RADIO_SHORTS_DISABLED_RXEN_Msk;
+#else /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
+	NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk |
+			    RADIO_SHORTS_END_DISABLE_Msk;
+	sw_switch(0);
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
 }
 
 void radio_switch_complete_and_tx(void)
 {
-	NRF_RADIO->SHORTS =
-	    (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk |
-	     RADIO_SHORTS_DISABLED_TXEN_Msk);
+#if defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+	NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk |
+			    RADIO_SHORTS_END_DISABLE_Msk |
+			    RADIO_SHORTS_DISABLED_TXEN_Msk;
+#else /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
+	NRF_RADIO->SHORTS = RADIO_SHORTS_READY_START_Msk |
+			    RADIO_SHORTS_END_DISABLE_Msk;
+	sw_switch(1);
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
 }
 
 void radio_switch_complete_and_disable(void)
 {
 	NRF_RADIO->SHORTS =
 	    (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk);
+
+#if !defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+	NRF_PPI->CHENCLR = PPI_CHEN_CH8_Msk | PPI_CHEN_CH11_Msk;
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
 }
 
 void radio_rssi_measure(void)
@@ -268,7 +362,7 @@ void radio_rssi_status_reset(void)
 
 u32_t radio_rssi_is_ready(void)
 {
-	return NRF_RADIO->EVENTS_RSSIEND;
+	return (NRF_RADIO->EVENTS_RSSIEND != 0);
 }
 
 void radio_filter_configure(u8_t bitmask_enable, u8_t bitmask_addr_type,
@@ -301,7 +395,7 @@ void radio_filter_status_reset(void)
 
 u32_t radio_filter_has_match(void)
 {
-	return NRF_RADIO->EVENTS_DEVMATCH;
+	return (NRF_RADIO->EVENTS_DEVMATCH != 0);
 }
 
 void radio_bc_configure(u32_t n)
@@ -317,7 +411,7 @@ void radio_bc_status_reset(void)
 
 u32_t radio_bc_has_match(void)
 {
-	return NRF_RADIO->EVENTS_BCMATCH;
+	return (NRF_RADIO->EVENTS_BCMATCH != 0);
 }
 
 void radio_tmr_status_reset(void)
@@ -331,7 +425,11 @@ void radio_tmr_status_reset(void)
 
 void radio_tmr_tifs_set(u32_t tifs)
 {
+#if defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
 	NRF_RADIO->TIFS = tifs;
+#else /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
+	NRF_TIMER1->CC[sw_tifs_toggle] = tifs;
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
 }
 
 u32_t radio_tmr_start(u8_t trx, u32_t ticks_start, u32_t remainder)
@@ -372,6 +470,29 @@ u32_t radio_tmr_start(u8_t trx, u32_t ticks_start, u32_t remainder)
 		NRF_PPI->CHENSET = PPI_CHEN_CH0_Msk;
 	}
 
+#if !defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+	NRF_TIMER1->TASKS_CLEAR = 1;
+	NRF_TIMER1->MODE = 0;
+	NRF_TIMER1->PRESCALER = 4;
+	NRF_TIMER1->BITMODE = 0; /* 16 bit */
+	NRF_TIMER1->TASKS_START = 1;
+
+	NRF_PPI->CH[8].EEP = (u32_t)&(NRF_RADIO->EVENTS_END);
+	NRF_PPI->CH[8].TEP = (u32_t)&(NRF_TIMER1->TASKS_CLEAR);
+	NRF_PPI->CHENSET = PPI_CHEN_CH8_Msk;
+
+	NRF_PPI->CH[9].EEP = (u32_t)
+			     &(NRF_TIMER1->EVENTS_COMPARE[0]);
+	NRF_PPI->CH[9].TEP = (u32_t)&(NRF_PPI->TASKS_CHG[0].DIS);
+
+	NRF_PPI->CH[10].EEP = (u32_t)
+			      &(NRF_TIMER1->EVENTS_COMPARE[1]);
+	NRF_PPI->CH[10].TEP = (u32_t)&(NRF_PPI->TASKS_CHG[1].DIS);
+
+	NRF_PPI->CHG[0] = PPI_CHG_CH9_Msk | PPI_CHG_CH12_Msk;
+	NRF_PPI->CHG[1] = PPI_CHG_CH10_Msk | PPI_CHG_CH13_Msk;
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
+
 	return remainder;
 }
 
@@ -379,6 +500,11 @@ void radio_tmr_stop(void)
 {
 	NRF_TIMER0->TASKS_STOP = 1;
 	NRF_TIMER0->TASKS_SHUTDOWN = 1;
+
+#if !defined(CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW)
+	NRF_TIMER1->TASKS_STOP = 1;
+	NRF_TIMER1->TASKS_SHUTDOWN = 1;
+#endif /* !CONFIG_BLUETOOTH_CONTROLLER_TIFS_HW */
 }
 
 void radio_tmr_hcto_configure(u32_t hcto)
@@ -480,28 +606,7 @@ void *radio_ccm_tx_pkt_set(struct ccm *ccm, void *pkt)
 	NRF_CCM->EVENTS_ENDCRYPT = 0;
 	NRF_CCM->EVENTS_ERROR = 0;
 
-#if defined(CONFIG_SOC_SERIES_NRF51X)
-	/* set up PPI to enable CCM */
-	NRF_PPI->CH[6].EEP = (u32_t)&(NRF_RADIO->EVENTS_READY);
-	NRF_PPI->CH[6].TEP = (u32_t)&(NRF_CCM->TASKS_KSGEN);
-	NRF_PPI->CHENSET = PPI_CHEN_CH6_Msk;
-#elif 0
-	/* encrypt tx packet */
-	NRF_CCM->INTENSET = CCM_INTENSET_ENDCRYPT_Msk;
 	NRF_CCM->TASKS_KSGEN = 1;
-	while (NRF_CCM->EVENTS_ENDCRYPT == 0) {
-		__WFE();
-		__SEV();
-		__WFE();
-	}
-	NRF_CCM->INTENCLR = CCM_INTENCLR_ENDCRYPT_Msk;
-	NVIC_ClearPendingIRQ(CCM_AAR_IRQn);
-
-	LL_ASSERT(NRF_CCM->EVENTS_ERROR == 0);
-#else
-	/* start KSGEN early, but dont wait for ENDCRYPT */
-	NRF_CCM->TASKS_KSGEN = 1;
-#endif
 
 	return _pkt_scratch;
 }
@@ -522,7 +627,7 @@ u32_t radio_ccm_is_done(void)
 
 u32_t radio_ccm_mic_is_valid(void)
 {
-	return NRF_CCM->MICSTATUS;
+	return (NRF_CCM->MICSTATUS != 0);
 }
 
 static u8_t MALIGN(4) _aar_scratch[3];

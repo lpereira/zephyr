@@ -5,7 +5,7 @@ else
 endif
 
 ifeq ($(PREBUILT_HOST_TOOLS),)
-	GENIDT := $(ZEPHYR_BASE)/scripts/gen_idt/gen_idt
+	GENIDT := scripts/gen_idt/gen_idt
 else
 	GENIDT := $(PREBUILT_HOST_TOOLS)/gen_idt
 endif
@@ -29,25 +29,12 @@ quiet_cmd_gen_idt = SIDT    $@
 )
 
 $(GENIDT):
-	$(Q)$(MAKE) $(build)=$(ZEPHYR_BASE)/scripts/gen_idt
+	$(Q)$(MAKE) $(build)=scripts/gen_idt
 
 staticIdt.o: $(PREBUILT_KERNEL) $(GENIDT)
 	$(call cmd,gen_idt)
 
-quiet_cmd_lnk_elf = LINK    $@
-      cmd_lnk_elf =								\
-(										\
-	$(CC) -T linker.cmd @$(KERNEL_NAME).lnk staticIdt.o			\
-		irq_int_vector_map.o -o $@;					\
-	${OBJCOPY} --change-section-address intList=${CONFIG_PHYS_LOAD_ADDR}	\
-		$@ elf.tmp;							\
-	$(OBJCOPY) -R intList elf.tmp $@;					\
-	rm elf.tmp								\
-)
+irq_int_vector_map.o: staticIdt.o
 
-$(KERNEL_ELF_NAME): staticIdt.o linker.cmd
-	$(call cmd,lnk_elf)
-	@$(srctree)/scripts/check_link_map.py $(KERNEL_NAME).map
-	@$(WARN_ABOUT_ASSERT)
-	@$(WARN_ABOUT_DEPRECATION)
+GENERATED_KERNEL_OBJECT_FILES += staticIdt.o irq_int_vector_map.o
 

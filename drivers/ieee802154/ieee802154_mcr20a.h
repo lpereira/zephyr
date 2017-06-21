@@ -10,7 +10,7 @@
 #ifndef __IEEE802154_MCR20A_H__
 #define __IEEE802154_MCR20A_H__
 
-#include <sections.h>
+#include <linker/sections.h>
 #include <atomic.h>
 #include <spi.h>
 
@@ -42,7 +42,9 @@ struct mcr20a_context {
 	struct k_sem seq_sync;
 	atomic_t seq_retval;
 	/************RX************/
-	char __stack mcr20a_rx_stack[CONFIG_IEEE802154_MCR20A_RX_STACK_SIZE];
+	K_THREAD_STACK_MEMBER(mcr20a_rx_stack,
+			      CONFIG_IEEE802154_MCR20A_RX_STACK_SIZE);
+	struct k_thread mcr20a_rx_thread;
 	u8_t lqi;
 };
 

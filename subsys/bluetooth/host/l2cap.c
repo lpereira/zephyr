@@ -13,12 +13,13 @@
 #include <misc/byteorder.h>
 #include <misc/util.h>
 
-#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_L2CAP)
-#include <bluetooth/log.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/hci_driver.h>
+
+#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_L2CAP)
+#include "common/log.h"
 
 #include "hci_core.h"
 #include "conn_internal.h"
@@ -27,7 +28,13 @@
 #define LE_CHAN_RTX(_w) CONTAINER_OF(_w, struct bt_l2cap_le_chan, chan.rtx_work)
 
 #define L2CAP_LE_MIN_MTU		23
+
+#if defined(CONFIG_BLUETOOTH_HCI_ACL_FLOW_CONTROL)
+#define L2CAP_LE_MAX_CREDITS		(CONFIG_BLUETOOTH_ACL_RX_COUNT - 1)
+#else
 #define L2CAP_LE_MAX_CREDITS		(CONFIG_BLUETOOTH_RX_BUF_COUNT - 1)
+#endif
+
 #define L2CAP_LE_CREDITS_THRESHOLD(_creds) (_creds / 2)
 
 #define L2CAP_LE_CID_DYN_START	0x0040
@@ -227,7 +234,7 @@ void bt_l2cap_chan_del(struct bt_l2cap_chan *chan)
 		goto destroy;
 	}
 
-	if (chan->ops && chan->ops->disconnected) {
+	if (chan->ops->disconnected) {
 		chan->ops->disconnected(chan);
 	}
 
@@ -634,7 +641,8 @@ static void l2cap_chan_rx_init(struct bt_l2cap_le_chan *chan)
 	if (!chan->rx.init_credits) {
 		if (chan->chan.ops->alloc_buf) {
 			/* Auto tune credits to receive a full packet */
-			chan->rx.init_credits = chan->rx.mtu /
+			chan->rx.init_credits = (chan->rx.mtu +
+						 (L2CAP_MAX_LE_MPS - 1)) /
 						L2CAP_MAX_LE_MPS;
 		} else {
 			chan->rx.init_credits = L2CAP_LE_MAX_CREDITS;
@@ -789,7 +797,7 @@ static void le_conn_req(struct bt_l2cap *l2cap, u8_t ident,
 		/* Update state */
 		bt_l2cap_chan_set_state(chan, BT_L2CAP_CONNECTED);
 
-		if (chan->ops && chan->ops->connected) {
+		if (chan->ops->connected) {
 			chan->ops->connected(chan);
 		}
 
@@ -949,7 +957,7 @@ static void le_conn_rsp(struct bt_l2cap *l2cap, u8_t ident,
 		/* Update state */
 		bt_l2cap_chan_set_state(&chan->chan, BT_L2CAP_CONNECTED);
 
-		if (chan->chan.ops && chan->chan.ops->connected) {
+		if (chan->chan.ops->connected) {
 			chan->chan.ops->connected(&chan->chan);
 		}
 
@@ -997,12 +1005,13 @@ static void le_disconn_rsp(struct bt_l2cap *l2cap, u8_t ident,
 
 static inline struct net_buf *l2cap_alloc_seg(struct net_buf *buf)
 {
+	struct net_buf_pool *pool = net_buf_pool_get(buf->pool_id);
 	struct net_buf *seg;
 
 	/* Try to use original pool if possible */
-	if (buf->pool->user_data_size >= BT_BUF_USER_DATA_MIN &&
-	    buf->pool->buf_size >= BT_L2CAP_BUF_SIZE(L2CAP_MAX_LE_MPS)) {
-		seg = net_buf_alloc(buf->pool, K_NO_WAIT);
+	if (pool->user_data_size >= BT_BUF_USER_DATA_MIN &&
+	    pool->buf_size >= BT_L2CAP_BUF_SIZE(L2CAP_MAX_LE_MPS)) {
+		seg = net_buf_alloc(pool, K_NO_WAIT);
 		if (seg) {
 			net_buf_reserve(seg, BT_L2CAP_CHAN_SEND_RESERVE);
 			return seg;
@@ -1017,6 +1026,7 @@ static struct net_buf *l2cap_chan_create_seg(struct bt_l2cap_le_chan *ch,
 					     struct net_buf *buf,
 					     size_t sdu_hdr_len)
 {
+	struct net_buf_pool *pool = net_buf_pool_get(buf->pool_id);
 	struct net_buf *seg;
 	u16_t headroom;
 	u16_t len;
@@ -1027,9 +1037,9 @@ static struct net_buf *l2cap_chan_create_seg(struct bt_l2cap_le_chan *ch,
 	}
 
 	/* Segment if there is no space in the user_data */
-	if (buf->pool->user_data_size < BT_BUF_USER_DATA_MIN) {
+	if (pool->user_data_size < BT_BUF_USER_DATA_MIN) {
 		BT_WARN("Too small buffer user_data_size %u",
-			buf->pool->user_data_size);
+			pool->user_data_size);
 		goto segment;
 	}
 
@@ -1431,7 +1441,7 @@ static void l2cap_chan_le_recv(struct bt_l2cap_le_chan *chan,
 	}
 
 	/* Always allocate buffer from the channel if supported. */
-	if (chan->chan.ops && chan->chan.ops->alloc_buf) {
+	if (chan->chan.ops->alloc_buf) {
 		chan->_sdu = chan->chan.ops->alloc_buf(&chan->chan);
 		if (!chan->_sdu) {
 			BT_ERR("Unable to allocate buffer for SDU");

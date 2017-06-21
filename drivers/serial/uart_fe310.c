@@ -217,7 +217,7 @@ static int uart_fe310_irq_tx_ready(struct device *dev)
  *
  * @return 1 if nothing remains to be transmitted, 0 otherwise
  */
-static int uart_fe310_irq_tx_empty(struct device *dev)
+static int uart_fe310_irq_tx_complete(struct device *dev)
 {
 	volatile struct uart_fe310_regs_t *uart = DEV_UART(dev);
 
@@ -361,7 +361,7 @@ static const struct uart_driver_api uart_fe310_driver_api = {
 	.irq_tx_enable    = uart_fe310_irq_tx_enable,
 	.irq_tx_disable   = uart_fe310_irq_tx_disable,
 	.irq_tx_ready     = uart_fe310_irq_tx_ready,
-	.irq_tx_empty     = uart_fe310_irq_tx_empty,
+	.irq_tx_complete  = uart_fe310_irq_tx_complete,
 	.irq_rx_enable    = uart_fe310_irq_rx_enable,
 	.irq_rx_disable   = uart_fe310_irq_rx_disable,
 	.irq_rx_ready     = uart_fe310_irq_rx_ready,
@@ -438,7 +438,7 @@ DEVICE_AND_API_INIT(uart_fe310_1, CONFIG_UART_FE310_PORT_1_NAME,
 		    (void *)&uart_fe310_driver_api);
 
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
-static void uart_fe310_irq_cfg_func_0(void)
+static void uart_fe310_irq_cfg_func_1(void)
 {
 	IRQ_CONNECT(FE310_UART_1_IRQ,
 		    CONFIG_UART_FE310_PORT_1_IRQ_PRIORITY,

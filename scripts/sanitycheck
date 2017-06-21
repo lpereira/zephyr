@@ -4,7 +4,7 @@
 This script scans for the set of unit test applications in the git
 repository and attempts to execute them. By default, it tries to
 build each test case on one platform per architecture, using a precedence
-list defined in an archtecture configuration file, and if possible
+list defined in an architecture configuration file, and if possible
 run the tests in the QEMU emulator.
 
 Test cases are detected by the presence of a 'testcase.ini' file in
@@ -12,7 +12,7 @@ the application's project directory. This file may contain one or
 more blocks, each identifying a test scenario. The title of the block
 is a name for the test case, which only needs to be unique for the
 test cases specified in that testcase.ini file. The full canonical
-name for each test case is <path to test case under samples/>/<block>.
+name for each test case is <path to test case>/<ini block>.
 
 Each testcase.ini block can define the following key/value pairs:
 
@@ -121,7 +121,7 @@ Each testcase.ini block can define the following key/value pairs:
 
     Would match it.
 
-Architectures and platforms are defined in an archtecture configuration
+Architectures and platforms are defined in an architecture configuration
 file which are stored by default in scripts/sanity_chk/arches/. These
 each define an [arch] block with the following key/value pairs:
 
@@ -173,6 +173,9 @@ import glob
 import concurrent
 import concurrent.futures
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
+from collections import OrderedDict
+from itertools import islice
 
 if "ZEPHYR_BASE" not in os.environ:
     sys.stderr.write("$ZEPHYR_BASE environment variable undefined.\n")
@@ -474,7 +477,7 @@ class SizeCalculator:
 		   "_k_fifo_area", "_k_lifo_area", "_k_stack_area",
 		   "_k_msgq_area", "_k_mbox_area", "_k_pipe_area",
                    "net_if", "net_if_event", "net_stack", "net_l2_data",
-                   "_k_queue_area"]
+                   "_k_queue_area", "_net_buf_pool_area" ]
     # These get copied into RAM only on non-XIP
     ro_sections = ["text", "ctors", "init_array", "reset",
                    "rodata", "devconfig", "net_l2", "vector"]
@@ -526,7 +529,7 @@ class SizeCalculator:
     def unrecognized_sections(self):
         """Get a list of sections inside the binary that weren't recognized
 
-        @return list of unrecogized section names
+        @return list of unrecognized section names
         """
         slist = []
         for v in self.sections:
@@ -592,7 +595,7 @@ class SizeCalculator:
 class MakeGoal:
     """Metadata class representing one of the sub-makes called by MakeGenerator
 
-    MakeGenerator returns a dictionary of these which can then be associdated
+    MakeGenerator returns a dictionary of these which can then be associated
     with TestInstances to get a complete picture of what happened during a test.
     MakeGenerator is used for tasks outside of building tests (such as
     defconfigs) which is why MakeGoal is a separate class from TestInstance.
@@ -1016,7 +1019,7 @@ class SanityConfigParser:
         for k, v in cp.items(section):
             if k not in valid_keys:
                 raise ConfigurationError(self.filename,
-                                         "Unknown config key '%s' in defintiion for '%s'"
+                                         "Unknown config key '%s' in definition for '%s'"
                                          % (k, section))
             d[k] = v
 
@@ -1351,16 +1354,16 @@ class TestSuite:
                     if tc.tc_filter and (plat in arch.platforms[:platform_limit] or all_plats or platform_filter):
                         args = tc.extra_args[:]
                         args.extend(["ARCH=" + plat.arch.name,
-                                "BOARD=" + plat.name, "initconfig"])
+                                "BOARD=" + plat.name, "config-sanitycheck"])
                         args.extend(extra_args)
                         # FIXME would be nice to use a common outdir for this so that
                         # conf, gen_idt, etc aren't rebuilt for every  combination,
-                        # need a way to avoid different Make processe from clobbering
+                        # need a way to avoid different Make processes from clobbering
                         # each other since they all try to build them simultaneously
 
                         o = os.path.join(self.outdir, plat.name, tc.path)
-                        dlist[tc, plat, tc.name.split("/")[-1]] = os.path.join(o,".config")
-                        goal = "_".join([plat.name, "_".join(tc.name.split("/")), "initconfig"])
+                        dlist[tc, plat, tc.name.split("/")[-1]] = os.path.join(o,".config-sanitycheck")
+                        goal = "_".join([plat.name, "_".join(tc.name.split("/")), "config-sanitycheck"])
                         mg.add_build_goal(goal, os.path.join(ZEPHYR_BASE, tc.code_location), o, args)
 
         info("Building testcase defconfigs...")
@@ -1558,7 +1561,7 @@ class TestSuite:
                                 lower_better))
         return results
 
-    def testcase_xunit_report(self, filename, args):
+    def testcase_xunit_report(self, filename, duration, args):
         if self.goals == None:
             raise SanityRuntimeException("execute() hasn't been run!")
 
@@ -1579,13 +1582,13 @@ class TestSuite:
         eleTestsuite = None
         append = args.only_failed
 
-        if os.path.exists(filename) or append:
+        if os.path.exists(filename) and append:
             tree = ET.parse(filename)
             eleTestsuites = tree.getroot()
             eleTestsuite =  tree.findall('testsuite')[0];
         else:
             eleTestsuites = ET.Element('testsuites')
-            eleTestsuite = ET.SubElement(eleTestsuites, 'testsuite', name=run,
+            eleTestsuite = ET.SubElement(eleTestsuites, 'testsuite', name=run, time="%d" %duration,
                     tests="%d" %(errors + passes + fails),  failures="%d" %fails,  errors="%d" %errors, skip="0")
 
         qemu_time = "0"
@@ -1594,21 +1597,26 @@ class TestSuite:
             i = self.instances[name]
             if append:
                 for tc in eleTestsuite.findall('testcase'):
-                    if tc.get('name') == "%s:%s" %(i.platform.name, i.test.name):
+                    if tc.get('classname') == "%s:%s" %(i.platform.name, i.test.name):
                         eleTestsuite.remove(tc)
 
             if not goal.failed and goal.qemu:
                     qemu_time = "%s" %(goal.metrics["qemu_time"])
 
-            eleTestcase = ET.SubElement(eleTestsuite, 'testcase', name="%s:%s" %(i.platform.name, i.test.name), time=qemu_time)
+            eleTestcase = ET.SubElement(eleTestsuite, 'testcase', classname="%s:%s" %(i.platform.name, i.test.name), name="%s" %(name), time=qemu_time)
             if goal.failed:
                 failure = ET.SubElement(eleTestcase, 'failure', type="failure", message=goal.reason)
                 p = ("%s/%s/%s" %(args.outdir, i.platform.name, i.test.name))
                 bl = os.path.join(p, "build.log")
+                if goal.reason != 'build_error':
+                    bl = os.path.join(p, "qemu.log")
+
                 if os.path.exists(bl):
                     with open(bl, "r") as f:
                         log = f.read()
-                        failure.text = (str(log))
+                        ansi_escape = re.compile(r'\x1b[^m]*m')
+                        output = ansi_escape.sub('', str(log))
+                        failure.text = (escape(output))
 
         result = ET.tostring(eleTestsuites)
         f = open(filename, 'wb')
@@ -1672,7 +1680,7 @@ def parse_arguments():
                  "Default is to not do any tag filtering. Multiple invocations "
                  "are treated as a logical 'or' relationship")
     parser.add_argument("-e", "--exclude-tag", action="append",
-            help="Specify tags of tests that should not run."
+            help="Specify tags of tests that should not run. "
                  "Default is to run all tests with all tags.")
     parser.add_argument("-f", "--only-failed", action="store_true",
             help="Run only those tests that failed the previous sanity check "
@@ -1696,14 +1704,19 @@ def parse_arguments():
     parser.add_argument("-o", "--testcase-report",
             help="Output a CSV spreadsheet containing results of the test run")
     parser.add_argument("-d", "--discard-report",
-            help="Output a CSV spreadhseet showing tests that were skipped "
+            help="Output a CSV spreadsheet showing tests that were skipped "
                  "and why")
     parser.add_argument("--compare-report",
-            help="Use this report file for size comparision")
+            help="Use this report file for size comparison")
 
     parser.add_argument("--ccache", action="store_const", const=1, default=0,
             help="Enable the use of ccache when building")
 
+    parser.add_argument("-B", "--subset",
+            help="Only run a subset of the tests, 1/4 for running the first 25%%, "
+                 "3/5 means run the 3rd fifth of the total. "
+                 "This option is useful when running a large number of tests on "
+                 "different hosts to speed up execution time.")
     parser.add_argument("-y", "--dry-run", action="store_true",
             help="Create the filtered list of test cases, but don't actually "
                  "run them. Useful if you're just interested in "
@@ -1894,6 +1907,14 @@ def main():
     if args.jobs:
         CPU_COUNTS = args.jobs
 
+    if args.subset:
+        subset, sets = args.subset.split("/")
+        if int(subset) > 0 and int(sets) >= int(subset):
+            info("Running only a subset: %s/%s" %(subset,sets))
+        else:
+            error("You have provided a wrong subset value: %s." %args.subset)
+            return
+
     if os.path.exists(args.outdir) and not args.no_clean:
         info("Cleaning output directory " + args.outdir)
         shutil.rmtree(args.outdir)
@@ -1914,6 +1935,21 @@ def main():
         for i, reason in discards.items():
             debug("{:<25} {:<50} {}SKIPPED{}: {}".format(i.platform.name,
                   i.test.name, COLOR_YELLOW, COLOR_NORMAL, reason))
+
+    ts.instancets = OrderedDict(sorted(ts.instances.items(), key=lambda t: t[0]))
+
+    if args.subset:
+        subset, sets = args.subset.split("/")
+        total = len(ts.instancets)
+        per_set = round(total / int(sets))
+        start = (int(subset) - 1 ) * per_set
+        if subset == sets:
+            end = total
+        else:
+            end = start + per_set
+
+        sliced_instances = islice(ts.instancets.items(),start, end)
+        ts.instances = OrderedDict(sliced_instances)
 
     info("%d tests selected, %d tests discarded due to filters" %
          (len(ts.instances), len(discards)))
@@ -1976,15 +2012,16 @@ def main():
         info("Generating coverage files...")
         generate_coverage(args.outdir, ["tests/*", "samples/*"])
 
+    duration = time.time() - start_time
     info("%s%d of %d%s tests passed with %s%d%s warnings in %d seconds" %
           (COLOR_RED if failed else COLOR_GREEN, len(goals) - failed,
            len(goals), COLOR_NORMAL, COLOR_YELLOW if warnings else COLOR_NORMAL,
-           warnings, COLOR_NORMAL, time.time() - start_time))
+           warnings, COLOR_NORMAL, duration))
 
     if args.testcase_report:
         ts.testcase_report(args.testcase_report)
     if not args.no_update:
-        ts.testcase_xunit_report(LAST_SANITY_XUNIT, args)
+        ts.testcase_xunit_report(LAST_SANITY_XUNIT, duration, args)
         ts.testcase_report(LAST_SANITY)
     if args.release:
         ts.testcase_report(RELEASE_DATA)

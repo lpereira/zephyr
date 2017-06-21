@@ -44,7 +44,7 @@ more events that are relevant.
 
 Two functions are available, `net_mgmt_add_event_callback()` for
 registering the callback function, and `net_mgmt_del_event_callback()`
-for un-registering. A helper function, `net_mgmt_init_event_cb()`, can
+for unregistering. A helper function, `net_mgmt_init_event_cb()`, can
 be used to ease the initialization of the callback structure.
 
 When an event is raised that matches a registered event mask, the
@@ -69,7 +69,7 @@ will be found in the `include/net/net_mgmt.h` header file. But in case
 of an L2 technology, let's say Ethernet, these would be found in
 `include/net/ethernet.h`
 
-You define your handler modelled with this signature:
+You define your handler modeled with this signature:
 
 .. code-block:: c
 

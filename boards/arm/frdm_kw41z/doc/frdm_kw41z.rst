@@ -6,14 +6,15 @@ NXP FRDM-KW41Z
 Overview
 ********
 
-The FRDM-KW41Z is a development kit enabled by the Kinetis® W series
-KW41Z/31Z/21Z (KW41Z) family built on ARM® Cortex®-M0+ processor with
-integrated 2.4 GHz transceiver supporting Bluetooth® Smart/Bluetooth®Low Energy
-(BLE) v4.2, Generic FSK, IEEE® 802.15.4 and Thread.
+The FRDM-KW41Z is a development kit enabled by the Kinetis |reg| W series
+KW41Z/31Z/21Z (KW41Z) family built on ARM |reg| Cortex |reg|-M0+ processor with
+integrated 2.4 GHz transceiver supporting Bluetooth |reg| Smart/Bluetooth
+|reg| Low Energy
+(BLE) v4.2, Generic FSK, IEEE |reg| 802.15.4 and Thread.
 
 The FRDM-KW41Z kit contains two Freedom boards that can be used as a
 development board or a shield to connect to a host processor. The FRDM-KW41Z is
-form-factor compatible with the Arduino™ R3 pin layout for more expansion
+form-factor compatible with the Arduino |trade| R3 pin layout for more expansion
 options.
 
 The FRDM-KW41Z highly-sensitive, optimized 2.4 GHz radio features a PCB
@@ -35,7 +36,8 @@ Hardware
 - SMA RF Connector
 - RF regulatory certified
 - Serial Flash for OTA firmware upgrades
-- On board NXP FXOS8700CQ digital sensor, 3D Accelerometer (±2g/±4g/±8g) + 3D
+- On board NXP FXOS8700CQ digital sensor, 3D Accelerometer ( |plusminus| 2g/
+  |plusminus| 4g/ |plusminus| 8g) + 3D
   Magnetometer
 - OpenSDA and JTAG debug
 
@@ -123,40 +125,35 @@ The KW41Z SoC has one UART, which is used for the console.
 Programming and Debugging
 *************************
 
+The FRDM-KW41Z includes the :ref:`nxp_opensda` serial and debug adapter built
+into the board to provide debugging, flash programming, and serial
+communication over USB.
+
+The :ref:`nxp_opensda_pyocd` tools do not yet support the KW41Z SoC.
+
+To use the Segger J-Link tools with OpenSDA, follow the instructions in the
+:ref:`nxp_opensda_jlink` page using the `Segger J-Link OpenSDA V2.1 Firmware`_.
+
 Flashing
 ========
 
-The FRDM-KW41Z includes an `OpenSDA`_ serial and debug adaptor built into the
-board. The adaptor provides:
+The Segger J-Link firmware does not support command line flashing, therefore
+the ``make flash`` build target is not supported.
 
-- A USB connection to the host computer, which exposes a Mass Storage and an
-  USB Serial Port.
-- A Serial Flash device, which implements the USB flash disk file storage.
-- A physical UART connection which is relayed over interface USB Serial port.
+Debugging
+=========
 
-Flashing an application to FRDM-KW41Z
--------------------------------------
-
-The sample application :ref:`hello_world` is used for this example.
-Build the Zephyr kernel and application:
+This example uses the :ref:`hello_world` sample with the
+:ref:`nxp_opensda_jlink` tools. Use the ``make debug`` build target to build
+your Zephyr application, invoke the J-Link GDB server, attach a GDB client, and
+program your Zephyr application to flash. It will leave you at a gdb prompt.
 
 .. code-block:: console
 
-   $ cd $ZEPHYR_BASE
+   $ cd <zephyr_root_path>
    $ . zephyr-env.sh
-   $ cd $ZEPHYR_BASE/samples/hello_world/
-   $ make BOARD=frdm_kw41z
-
-Connect the FRDM-KW41Z to your host computer using the USB port and you should
-see a USB connection which exposes a Mass Storage (DAPLINK) and a USB Serial
-Port. Copy the generated zephyr.bin in the DAPLINK drive.
-
-Reset the board and you should be able to see on the corresponding Serial Port
-the following message:
-
-.. code-block:: console
-
-   Hello World! arm
+   $ cd samples/hello_world/
+   $ make BOARD=frdm_kw41z DEBUG_SCRIPT=jlink.sh debug
 
 
 .. _FRDM-KW41Z Website:
@@ -168,9 +165,6 @@ the following message:
 .. _FRDM-KW41Z Schematics:
    http://www.nxp.com/assets/downloads/data/en/schematics/FRDM-KW41Z-SCH.pdf
 
-.. _OpenSDA:
-   http://www.nxp.com/products/software-and-tools/hardware-development-tools/startertrak-development-boards/opensda-serial-and-debug-adapter:OPENSDA#FRDM-KW41Z
-
 .. _KW41Z Website:
    http://www.nxp.com/products/microcontrollers-and-processors/arm-processors/kinetis-cortex-m-mcus/w-series-wireless-m0-plus-m4/kinetis-kw41z-2.4-ghz-dual-mode-ble-and-802.15.4-wireless-radio-microcontroller-mcu-based-on-arm-cortex-m0-plus-core:KW41Z
 
@@ -179,3 +173,6 @@ the following message:
 
 .. _KW41Z Reference Manual:
    http://www.nxp.com/assets/documents/data/en/reference-manuals/MKW41Z512RM.pdf
+
+.. _Segger J-Link OpenSDA V2.1 Firmware:
+   https://www.segger.com/downloads/jlink/OpenSDA_V2_1.bin

@@ -20,11 +20,9 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
-#include <gatt/gap.h>
 
 #define DEVICE_NAME	CONFIG_BLUETOOTH_DEVICE_NAME
 #define DEVICE_NAME_LEN	(sizeof(DEVICE_NAME) - 1)
-#define APPEARANCE	0x0000
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -95,7 +93,7 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
-	printk("Passkey for %s: %u\n", addr, passkey);
+	printk("Passkey for %s: %06u\n", addr, passkey);
 }
 
 static void auth_cancel(struct bt_conn *conn)
@@ -125,7 +123,6 @@ void main(void)
 
 	printk("Bluetooth initialized\n");
 
-	gap_init(DEVICE_NAME, APPEARANCE);
 
 	bt_conn_auth_cb_register(&auth_cb_display);
 	bt_conn_cb_register(&conn_callbacks);

@@ -131,17 +131,17 @@ static inline u16_t ipv4_to_hash(struct in_addr *addr)
 	/* There is 11 bits available for IPv4 address */
 	/* Use more bits from the lower part of address space */
 	return
-		TAKE_BIT(addr->s_addr[0], 31, 11, 1) |
-		TAKE_BIT(addr->s_addr[0], 27, 11, 2) |
-		TAKE_BIT(addr->s_addr[0], 21, 11, 3) |
-		TAKE_BIT(addr->s_addr[0], 17, 11, 4) |
-		TAKE_BIT(addr->s_addr[0], 14, 11, 5) |
-		TAKE_BIT(addr->s_addr[0], 11, 11, 6) |
-		TAKE_BIT(addr->s_addr[0], 8, 11, 7) |
-		TAKE_BIT(addr->s_addr[0], 5, 11, 8) |
-		TAKE_BIT(addr->s_addr[0], 3, 11, 9) |
-		TAKE_BIT(addr->s_addr[0], 2, 11, 10) |
-		TAKE_BIT(addr->s_addr[0], 0, 11, 11);
+		TAKE_BIT(addr->s_addr, 31, 11, 1) |
+		TAKE_BIT(addr->s_addr, 27, 11, 2) |
+		TAKE_BIT(addr->s_addr, 21, 11, 3) |
+		TAKE_BIT(addr->s_addr, 17, 11, 4) |
+		TAKE_BIT(addr->s_addr, 14, 11, 5) |
+		TAKE_BIT(addr->s_addr, 11, 11, 6) |
+		TAKE_BIT(addr->s_addr, 8, 11, 7) |
+		TAKE_BIT(addr->s_addr, 5, 11, 8) |
+		TAKE_BIT(addr->s_addr, 3, 11, 9) |
+		TAKE_BIT(addr->s_addr, 2, 11, 10) |
+		TAKE_BIT(addr->s_addr, 0, 11, 11);
 }
 
 /* Return either the first free position in the cache (idx < 0) or
@@ -311,10 +311,28 @@ static inline enum net_verdict cache_check(enum net_ip_protocol proto,
 
 	return NET_CONTINUE;
 }
+
+static inline void cache_remove(struct net_conn *conn)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_NET_MAX_CONN; i++) {
+		if (conn_cache[i].idx < 0 ||
+		    conn_cache[i].idx >= CONFIG_NET_MAX_CONN) {
+			continue;
+		}
+
+		if (&conns[conn_cache[i].idx] == conn) {
+			conn_cache[i].idx = -1;
+			break;
+		}
+	}
+}
 #else
 #define cache_clear(...)
 #define cache_add_neg(...)
 #define cache_check(...) NET_CONTINUE
+#define cache_remove(...)
 #endif /* CONFIG_NET_CONN_CACHE */
 
 int net_conn_unregister(struct net_conn_handle *handle)
@@ -328,6 +346,8 @@ int net_conn_unregister(struct net_conn_handle *handle)
 	if (!(conn->flags & NET_CONN_IN_USE)) {
 		return -ENOENT;
 	}
+
+	cache_remove(conn);
 
 	NET_DBG("[%zu] connection handler %p removed",
 		(conn - conns) / sizeof(*conn), conn);
@@ -412,6 +432,116 @@ void prepare_register_debug_print(char *dst, int dst_len,
 }
 #endif /* CONFIG_NET_DEBUG_CONN */
 
+/* Check if we already have identical connection handler installed. */
+static int find_conn_handler(enum net_ip_protocol proto,
+			     const struct sockaddr *remote_addr,
+			     const struct sockaddr *local_addr,
+			     u16_t remote_port,
+			     u16_t local_port)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_NET_MAX_CONN; i++) {
+		if (!(conns[i].flags & NET_CONN_IN_USE)) {
+			continue;
+		}
+
+		if (conns[i].proto != proto) {
+			continue;
+		}
+
+		if (remote_addr) {
+			if (!(conns[i].flags & NET_CONN_REMOTE_ADDR_SET)) {
+				continue;
+			}
+
+#if defined(CONFIG_NET_IPV6)
+			if (remote_addr->family == AF_INET6 &&
+			    remote_addr->family ==
+			    conns[i].remote_addr.family) {
+				if (!net_ipv6_addr_cmp(
+					    &net_sin6(remote_addr)->sin6_addr,
+					    &net_sin6(&conns[i].remote_addr)->
+								sin6_addr)) {
+					continue;
+				}
+			} else
+#endif
+#if defined(CONFIG_NET_IPV4)
+			if (remote_addr->family == AF_INET &&
+			    remote_addr->family ==
+			    conns[i].remote_addr.family) {
+				if (!net_ipv4_addr_cmp(
+					    &net_sin(remote_addr)->sin_addr,
+					    &net_sin(&conns[i].remote_addr)->
+								sin_addr)) {
+					continue;
+				}
+			} else
+#endif
+			{
+				continue;
+			}
+		} else {
+			if (conns[i].flags & NET_CONN_REMOTE_ADDR_SET) {
+				continue;
+			}
+		}
+
+		if (local_addr) {
+			if (!(conns[i].flags & NET_CONN_LOCAL_ADDR_SET)) {
+				continue;
+			}
+
+#if defined(CONFIG_NET_IPV6)
+			if (local_addr->family == AF_INET6 &&
+			    local_addr->family ==
+			    conns[i].local_addr.family) {
+				if (!net_ipv6_addr_cmp(
+					    &net_sin6(local_addr)->sin6_addr,
+					    &net_sin6(&conns[i].local_addr)->
+								sin6_addr)) {
+					continue;
+				}
+			} else
+#endif
+#if defined(CONFIG_NET_IPV4)
+			if (local_addr->family == AF_INET &&
+			    local_addr->family ==
+			    conns[i].local_addr.family) {
+				if (!net_ipv4_addr_cmp(
+					    &net_sin(local_addr)->sin_addr,
+					    &net_sin(&conns[i].local_addr)->
+								sin_addr)) {
+					continue;
+				}
+			} else
+#endif
+			{
+				continue;
+			}
+		} else {
+			if (conns[i].flags & NET_CONN_LOCAL_ADDR_SET) {
+				continue;
+			}
+		}
+
+		if (net_sin(&conns[i].remote_addr)->sin_port !=
+		    htons(remote_port)) {
+			continue;
+		}
+
+		if (net_sin(&conns[i].local_addr)->sin_port !=
+		    htons(local_port)) {
+			continue;
+		}
+
+		return i;
+	}
+
+	return -ENOENT;
+}
+
 int net_conn_register(enum net_ip_protocol proto,
 		      const struct sockaddr *remote_addr,
 		      const struct sockaddr *local_addr,
@@ -423,6 +553,14 @@ int net_conn_register(enum net_ip_protocol proto,
 {
 	int i;
 	u8_t rank = 0;
+
+	i = find_conn_handler(proto, remote_addr, local_addr, remote_port,
+			      local_port);
+	if (i != -ENOENT) {
+		NET_ERR("Identical connection handler %p already found.",
+			&conns[i]);
+		return -EALREADY;
+	}
 
 	for (i = 0; i < CONFIG_NET_MAX_CONN; i++) {
 		if (conns[i].flags & NET_CONN_IN_USE) {
@@ -456,7 +594,7 @@ int net_conn_register(enum net_ip_protocol proto,
 #if defined(CONFIG_NET_IPV4)
 			if (remote_addr->family == AF_INET) {
 				if (!net_sin(remote_addr)->
-							sin_addr.s_addr[0]) {
+							sin_addr.s_addr) {
 					rank |= NET_RANK_REMOTE_UNSPEC_ADDR;
 				} else {
 					rank |= NET_RANK_REMOTE_SPEC_ADDR;
@@ -491,7 +629,7 @@ int net_conn_register(enum net_ip_protocol proto,
 
 #if defined(CONFIG_NET_IPV4)
 			if (local_addr->family == AF_INET) {
-				if (!net_sin(local_addr)->sin_addr.s_addr[0]) {
+				if (!net_sin(local_addr)->sin_addr.s_addr) {
 					rank |= NET_RANK_LOCAL_UNSPEC_ADDR;
 				} else {
 					rank |= NET_RANK_LOCAL_SPEC_ADDR;
@@ -597,7 +735,7 @@ static bool check_addr(struct net_pkt *pkt,
 			addr4 = &NET_IPV4_HDR(pkt)->dst;
 		}
 
-		if (net_sin(addr)->sin_addr.s_addr[0]) {
+		if (net_sin(addr)->sin_addr.s_addr) {
 			if (!net_ipv4_addr_cmp(&net_sin(addr)->sin_addr,
 					       addr4)) {
 				return false;
@@ -630,6 +768,7 @@ enum net_verdict net_conn_input(enum net_ip_protocol proto, struct net_pkt *pkt)
 {
 	int i, best_match = -1;
 	s16_t best_rank = -1;
+	u16_t chksum;
 
 #if defined(CONFIG_NET_CONN_CACHE)
 	enum net_verdict verdict;
@@ -642,15 +781,13 @@ enum net_verdict net_conn_input(enum net_ip_protocol proto, struct net_pkt *pkt)
 	}
 #endif
 
+	if (proto == IPPROTO_TCP) {
+		chksum = NET_TCP_HDR(pkt)->chksum;
+	} else {
+		chksum = NET_UDP_HDR(pkt)->chksum;
+	}
+
 	if (IS_ENABLED(CONFIG_NET_DEBUG_CONN)) {
-		u16_t chksum;
-
-		if (proto == IPPROTO_TCP) {
-			chksum = NET_TCP_HDR(pkt)->chksum;
-		} else {
-			chksum = NET_UDP_HDR(pkt)->chksum;
-		}
-
 		NET_DBG("Check %s listener for pkt %p src port %u dst port %u "
 			"family %d chksum 0x%04x", net_proto2str(proto), pkt,
 			ntohs(NET_CONN_HDR(pkt)->src_port),
@@ -709,6 +846,40 @@ enum net_verdict net_conn_input(enum net_ip_protocol proto, struct net_pkt *pkt)
 	}
 
 	if (best_match >= 0) {
+
+		/* If packet has a listener configured, then check also the
+		 * protocol checksum if that checking is enabled.
+		 * If the checksum calculation fails, then discard the message.
+		 */
+		if (IS_ENABLED(CONFIG_NET_UDP_CHECKSUM) &&
+		    proto == IPPROTO_UDP) {
+			u16_t chksum_calc;
+
+			NET_UDP_HDR(pkt)->chksum = 0;
+			chksum_calc = ~net_calc_chksum_udp(pkt);
+
+			if (chksum != chksum_calc) {
+				net_stats_update_udp_chkerr();
+				goto drop;
+			}
+
+			NET_UDP_HDR(pkt)->chksum = chksum;
+
+		} else if (IS_ENABLED(CONFIG_NET_TCP_CHECKSUM) &&
+			   proto == IPPROTO_TCP) {
+			u16_t chksum_calc;
+
+			NET_TCP_HDR(pkt)->chksum = 0;
+			chksum_calc = ~net_calc_chksum_tcp(pkt);
+
+			if (chksum != chksum_calc) {
+				net_stats_update_tcp_seg_chkerr();
+				goto drop;
+			}
+
+			NET_TCP_HDR(pkt)->chksum = chksum;
+		}
+
 #if defined(CONFIG_NET_CONN_CACHE)
 		NET_DBG("[%d] match found cb %p ud %p rank 0x%02x cache 0x%x",
 			best_match,
@@ -733,9 +904,7 @@ enum net_verdict net_conn_input(enum net_ip_protocol proto, struct net_pkt *pkt)
 			goto drop;
 		}
 
-		if (proto == IPPROTO_UDP) {
-			net_stats_update_udp_recv();
-		}
+		net_stats_update_per_proto_recv(proto);
 
 		return NET_OK;
 	}
@@ -761,12 +930,14 @@ enum net_verdict net_conn_input(enum net_ip_protocol proto, struct net_pkt *pkt)
 #endif
 	{
 		send_icmp_error(pkt);
+
+		if (IS_ENABLED(CONFIG_NET_TCP) && proto == IPPROTO_TCP) {
+			net_stats_update_tcp_seg_connrst();
+		}
 	}
 
 drop:
-	if (proto == IPPROTO_UDP) {
-		net_stats_update_udp_drop();
-	}
+	net_stats_update_per_proto_drop(proto);
 
 	return NET_DROP;
 }

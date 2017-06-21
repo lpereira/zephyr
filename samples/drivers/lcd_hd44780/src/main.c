@@ -71,13 +71,13 @@
 #include <string.h>
 
 
-#if defined(CONFIG_GPIO_ATMEL_SAM3)
+#if defined(CONFIG_SOC_PART_NUMBER_SAM3X8E)
 #define GPIO_DRV_NAME CONFIG_GPIO_ATMEL_SAM3_PORTC_DEV_NAME
 #else
 #error "Unsupported GPIO driver"
 #endif
 
-#if defined(CONFIG_SOC_ATMEL_SAM3)
+#if defined(CONFIG_SOC_PART_NUMBER_SAM3X8E)
 /* Define GPIO OUT to LCD */
 #define GPIO_PIN_PC12_D0		12	/* PC12 - pin 51 */
 #define GPIO_PIN_PC13_D1		13	/* PC13 - pin 50 */
@@ -530,6 +530,7 @@ void main(void)
 	gpio_dev = device_get_binding(GPIO_DRV_NAME);
 	if (!gpio_dev) {
 		printk("Cannot find %s!\n", GPIO_DRV_NAME);
+		return;
 	}
 
 	/* Setup GPIO output */

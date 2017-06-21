@@ -30,7 +30,8 @@
 #define MY_STACK_SIZE 2048
 #define MY_PRIORITY 5
 
-char __noinit __stack my_stack_area[MY_STACK_SIZE];
+K_THREAD_STACK_DEFINE(my_stack_area, MY_STACK_SIZE);
+static struct k_thread my_thread;
 
 /* externs */
 
@@ -62,7 +63,7 @@ void isr_handler(void)
 
 /**
  *
- * This is the handler for the divde by zero exception.
+ * This is the handler for the divide by zero exception.
  *
  * The source of this divide-by-zero error comes from the following line in
  * main() ...
@@ -206,9 +207,9 @@ void main(void)
 	 * Start task to trigger the spurious interrupt handler
 	 */
 	TC_PRINT("Testing to see spurious handler executes properly\n");
-	k_thread_spawn(my_stack_area, MY_STACK_SIZE,
-		       idt_spur_task, NULL, NULL, NULL,
-		       MY_PRIORITY, 0, K_NO_WAIT);
+	k_thread_create(&my_thread, my_stack_area, MY_STACK_SIZE,
+			idt_spur_task, NULL, NULL, NULL,
+			MY_PRIORITY, 0, K_NO_WAIT);
 
 	/*
 	 * The fiber/task should not run past where the spurious interrupt is

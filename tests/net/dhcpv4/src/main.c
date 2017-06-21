@@ -7,7 +7,7 @@
  */
 
 #include <zephyr.h>
-#include <sections.h>
+#include <linker/sections.h>
 
 #include <zephyr/types.h>
 #include <stddef.h>
@@ -524,10 +524,11 @@ static void receiver_cb(struct net_mgmt_event_callback *cb,
 	test_result(true);
 }
 
-void main_thread(void)
+void main(void)
 {
 	struct net_if *iface;
 
+	k_thread_priority_set(k_current_get(), K_PRIO_COOP(7));
 	net_mgmt_init_event_callback(&rx_cb, receiver_cb,
 				     NET_EVENT_IPV4_ADDR_ADD);
 
@@ -542,14 +543,4 @@ void main_thread(void)
 	net_dhcpv4_start(iface);
 
 	k_yield();
-}
-
-#define STACKSIZE 3000
-char __noinit __stack thread_stack[STACKSIZE];
-
-void main(void)
-{
-	k_thread_spawn(&thread_stack[0], STACKSIZE,
-		       (k_thread_entry_t)main_thread, NULL, NULL, NULL,
-		       K_PRIO_COOP(7), 0, 0);
 }

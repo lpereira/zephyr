@@ -33,6 +33,7 @@ comment "BLE Controller configuration"
 config BLUETOOTH_CONTROLLER_DUP_FILTER_LEN
 	prompt "Number of addresses in the scan duplicate filter"
 	int
+	depends on BLUETOOTH_OBSERVER
 	default 16
 	help
 	  Set the number of unique BLE addresses that can be filtered as
@@ -43,19 +44,23 @@ config BLUETOOTH_CONTROLLER_RX_BUFFERS
 	int
 	default 1
 	default 6 if BLUETOOTH_HCI_RAW
-	range 1 10
+	range 1 18
 	help
-	  Set the number of Rx PDUs to be buffered in the controller.
+	  Set the number of Rx PDUs to be buffered in the controller. In a 7.5ms
+	  connection interval and 2M PHY, maximum 18 packets with L2CAP payload
+	  size of 1 byte can be received.
 
 config BLUETOOTH_CONTROLLER_TX_BUFFERS
 	prompt "Number of Tx buffers"
 	int
 	default 2
 	default 7 if BLUETOOTH_HCI_RAW
-	range 1 10
+	range 1 19
 	help
-	  Set the number of Tx PDUs to be queued for transmission
-	  in the controller.
+	  Set the number of Tx PDUs to be queued for transmission in the
+	  controller. In a 7.5ms connection interval and 2M PHY, maximum 19
+	  packets can be enqueued, with 18 packets with L2CAP payload size of 1
+	  byte can be acknowledged.
 
 config BLUETOOTH_CONTROLLER_TX_BUFFER_SIZE
 	prompt "Tx buffer size"
@@ -88,9 +93,18 @@ config BLUETOOTH_CONTROLLER_SUBVERSION_NUMBER
 
 config BLUETOOTH_CONTROLLER_RX_PRIO_STACK_SIZE
 	int
-	default 320
+	default 448
 
 comment "BLE Controller features"
+
+if BLUETOOTH_CONN
+
+config BLUETOOTH_CONTROLLER_LE_ENC
+	bool
+	depends on !BLUETOOTH_CONTROLLER_DATA_LENGTH_CLEAR && !BLUETOOTH_CONTROLLER_PHY_2M_NRF
+	default y
+	# Enable support for Bluetooth v4.0 LE Encryption feature in the
+	# Controller.
 
 config BLUETOOTH_CONTROLLER_LE_PING
 	bool "LE Ping"
@@ -110,9 +124,19 @@ config BLUETOOTH_CONTROLLER_DATA_LENGTH_MAX
 	depends on BLUETOOTH_CONTROLLER_DATA_LENGTH
 	int
 	default 27
-	range 27 251
+	range 27 251 if SOC_SERIES_NRF52X || BLUETOOTH_CONTROLLER_DATA_LENGTH_CLEAR
+	range 27 27
 	help
 	  Set the maximum data length of PDU supported in the Controller.
+
+config BLUETOOTH_CONTROLLER_PHY
+	bool "PHY Update"
+	default y
+	help
+	  Enable support for Bluetooth 5.0 PHY Update Procedure in the
+	  Controller.
+
+endif # BLUETOOTH_CONN
 
 config BLUETOOTH_CONTROLLER_CHAN_SEL_2
 	bool "Channel Selection Algorithm #2"
@@ -121,6 +145,15 @@ config BLUETOOTH_CONTROLLER_CHAN_SEL_2
 	  Enable support for Bluetooth 5.0 LE Channel Selection Algorithm #2 in
 	  the Controller.
 
+config BLUETOOTH_CONTROLLER_ADV_EXT
+	bool "LE Advertising Extensions"
+	select BLUETOOTH_CONTROLLER_SCAN_REQ_NOTIFY
+	select BLUETOOTH_CONTROLLER_CHAN_SEL_2
+	default y
+	help
+	  Enable support for Bluetooth 5.0 LE Advertising Extensions in the
+	  Controller.
+
 config BLUETOOTH_CONTROLLER_ADVANCED_FEATURES
 	bool "Show advanced features"
 	help
@@ -128,6 +161,40 @@ config BLUETOOTH_CONTROLLER_ADVANCED_FEATURES
 
 menu "Advanced features"
 	visible if BLUETOOTH_CONTROLLER_ADVANCED_FEATURES
+
+config BLUETOOTH_CONTROLLER_DATA_LENGTH_CLEAR
+	bool "Data Length Support (Cleartext only)"
+	depends on BLUETOOTH_CONTROLLER_DATA_LENGTH && SOC_SERIES_NRF51X
+	help
+	  Enable support for Bluetooth v4.2 LE Data Length Update procedure, up to
+	  251 byte cleartext payloads in the Controller. Encrypted connections
+	  are not supported.
+
+if BLUETOOTH_CONTROLLER_PHY
+
+config BLUETOOTH_CONTROLLER_PHY_2M
+	bool "2Mbps PHY Support"
+	depends on !SOC_SERIES_NRF51X || BLUETOOTH_CONTROLLER_PHY_2M_NRF
+	default y
+	help
+	  Enable support for Bluetooth 5.0 2Mbps PHY in the Controller.
+
+config BLUETOOTH_CONTROLLER_PHY_2M_NRF
+	bool "2Mbps Nordic Semiconductor PHY Support (Cleartext only)"
+	depends on SOC_SERIES_NRF51X
+	select BLUETOOTH_CONTROLLER_PHY_2M
+	help
+	  Enable support for Nordic Semiconductor proprietary 2Mbps PHY in the
+	  Controller. Encrypted connections are not supported.
+
+config BLUETOOTH_CONTROLLER_PHY_CODED
+	bool "Coded PHY Support"
+	depends on SOC_NRF52840
+	default y
+	help
+	  Enable support for Bluetooth 5.0 Coded PHY in the Controller.
+
+endif # BLUETOOTH_CONTROLLER_PHY
 
 config BLUETOOTH_CONTROLLER_WORKER_PRIO
 	prompt "Radio and Ticker's Worker IRQ priority"
@@ -200,8 +267,17 @@ config BLUETOOTH_CONTROLLER_SCHED_ADVANCED
 	  Disabling this feature will lead to overlapping role in timespace
 	  leading to skipped events amongst active roles.
 
+config BLUETOOTH_CONTROLLER_TIFS_HW
+	bool "H/w Accelerated tIFS Trx switching"
+	default y
+	help
+	  Enable use of hardware accelerated tIFS Trx switching.
+
+if BLUETOOTH_CONN
+
 config BLUETOOTH_CONTROLLER_FAST_ENC
 	bool "Fast Encryption Setup"
+	depends on BLUETOOTH_CONTROLLER_LE_ENC
 	help
 	  Enable connection encryption setup in 3 connection intervals.
 	  Peripheral will respond to Encryption Request with Encryption Response
@@ -218,10 +294,23 @@ config BLUETOOTH_CONTROLLER_CONN_RSSI
 	help
 	  Enable connection RSSI measurement.
 
+endif # BLUETOOTH_CONN
+
 config BLUETOOTH_CONTROLLER_ADV_INDICATION
 	bool "Advertisement indications"
 	help
 	  Generate events indicating on air advertisement events.
+
+config BLUETOOTH_CONTROLLER_SCAN_REQ_NOTIFY
+	bool "Scan Request Notifications"
+	help
+	  Generate events notifying the on air scan requests received.
+
+config BLUETOOTH_CONTROLLER_SCAN_REQ_RSSI
+	bool "Measure Scan Request RSSI"
+	depends on BLUETOOTH_CONTROLLER_SCAN_REQ_NOTIFY
+	help
+	  Measure RSSI of the on air scan requests received.
 
 endmenu
 

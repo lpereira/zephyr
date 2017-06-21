@@ -11,7 +11,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <misc/printk.h>
-#include <sections.h>
+#include <linker/sections.h>
 
 #include <tc_util.h>
 
@@ -109,8 +109,10 @@ static bool run_tests(void)
 	return true;
 }
 
-void main_thread(void)
+void main(void)
 {
+	k_thread_priority_set(k_current_get(), K_PRIO_COOP(7));
+
 	if (run_tests()) {
 		TC_END_REPORT(TC_PASS);
 	} else {
@@ -118,12 +120,3 @@ void main_thread(void)
 	}
 }
 
-#define STACKSIZE 2000
-char __noinit __stack thread_stack[STACKSIZE];
-
-void main(void)
-{
-	k_thread_spawn(&thread_stack[0], STACKSIZE,
-		       (k_thread_entry_t)main_thread, NULL, NULL, NULL,
-		       K_PRIO_COOP(7), 0, 0);
-}

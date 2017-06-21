@@ -1018,8 +1018,8 @@ void net_dhcpv4_start(struct net_if *iface)
 		iface->dhcpv4.lease_time = 0;
 		iface->dhcpv4.renewal_time = 0;
 
-		iface->dhcpv4.server_id.s_addr[0] = 0;
-		iface->dhcpv4.requested_ip.s_addr[0] = 0;
+		iface->dhcpv4.server_id.s_addr = 0;
+		iface->dhcpv4.requested_ip.s_addr = 0;
 
 		k_delayed_work_init(&iface->dhcpv4.timer, dhcpv4_timeout);
 		k_delayed_work_init(&iface->dhcpv4.t1_timer, dhcpv4_t1_timeout);
@@ -1091,15 +1091,20 @@ void net_dhcpv4_stop(struct net_if *iface)
 
 int dhcpv4_init(void)
 {
+	struct sockaddr local_addr;
 	int ret;
 
 	NET_DBG("");
+
+	net_ipaddr_copy(&net_sin(&local_addr)->sin_addr,
+			net_ipv4_unspecified_address());
+	local_addr.family = AF_INET;
 
 	/* Register UDP input callback on
 	 * DHCPV4_SERVER_PORT(67) and DHCPV4_CLIENT_PORT(68) for
 	 * all dhcpv4 related incoming packets.
 	 */
-	ret = net_udp_register(NULL, NULL,
+	ret = net_udp_register(NULL, &local_addr,
 			       DHCPV4_SERVER_PORT,
 			       DHCPV4_CLIENT_PORT,
 			       net_dhcpv4_input, NULL, NULL);

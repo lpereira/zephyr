@@ -26,7 +26,7 @@ emulating Xtensa hardware.
 Hardware
 ********
 
-The folllowing Xtensa cores are officially supported:
+The following Xtensa cores are officially supported:
 
 - hifi3_bd5
 - XRC_FUSION_AON_ALL_LM
@@ -48,8 +48,8 @@ The frequency of the clock under simulation is set to 25MHz.
 System requirements
 *******************
 
-Pre-requisites
-==============
+Prerequisites
+=============
 A Linux host system is required for Xtensa development work.
 We recommend using a __``Debian 9.x (Stretch)``__ or recent __``Ubuntu``__
 releases (with multilib support).

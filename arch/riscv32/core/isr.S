@@ -5,7 +5,7 @@
  */
 
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <kernel_structs.h>
 #include <offsets_short.h>
 
@@ -35,6 +35,10 @@ GTEXT(_sys_k_event_logger_interrupt)
 
 #ifdef CONFIG_IRQ_OFFLOAD
 GTEXT(_offload_routine)
+#endif
+
+#ifdef CONFIG_TIMESLICING
+GTEXT(_update_time_slice_before_swap)
 #endif
 
 /* exports */
@@ -274,6 +278,11 @@ on_thread_stack:
 	lw t0, 0x00(sp)
 	addi sp, t0, 0
 
+#ifdef CONFIG_STACK_SENTINEL
+	call _check_stack_sentinel
+	la t1, _kernel
+#endif
+
 #ifdef CONFIG_PREEMPT_ENABLED
 	/*
 	 * Check if we need to perform a reschedule
@@ -301,10 +310,12 @@ on_thread_stack:
 #endif /* CONFIG_PREEMPT_ENABLED */
 
 reschedule:
+#if CONFIG_TIMESLICING
+	call _update_time_slice_before_swap
+#endif
 #if CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
 	call _sys_k_event_logger_context_switch
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH */
-
 	/* Get reference to _kernel */
 	la t0, _kernel
 
@@ -367,7 +378,6 @@ no_reschedule:
 	/* Restore context at SOC level */
 	jal ra, __soc_restore_context
 #endif /* CONFIG_RISCV_SOC_CONTEXT_SAVE */
-
 	/* Restore caller-saved registers from thread stack */
 	lw ra, __NANO_ESF_ra_OFFSET(sp)
 	lw gp, __NANO_ESF_gp_OFFSET(sp)

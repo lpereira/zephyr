@@ -20,20 +20,20 @@
 extern "C" {
 #endif
 
-#define QUARK_SE_IPM_OUTBOUND	0
+#define QUARK_SE_IPM_OUTBOUND		0
 #define QUARK_SE_IPM_INBOUND		1
 
 #if defined(CONFIG_SOC_QUARK_SE_C1000)
 /* First byte of the QUARK_SE_IPM_MASK register is for the Lakemont */
 #define QUARK_SE_IPM_MASK_START_BIT		0
-#define QUARK_SE_IPM_INTERRUPT		21
+#define QUARK_SE_IPM_INTERRUPT			21
 #define QUARK_SE_IPM_ARC_LMT_DIR		QUARK_SE_IPM_INBOUND
 #define QUARK_SE_IPM_LMT_ARC_DIR		QUARK_SE_IPM_OUTBOUND
 
 #elif defined(CONFIG_SOC_QUARK_SE_C1000_SS)
 /* Second byte is for ARC */
 #define QUARK_SE_IPM_MASK_START_BIT		8
-#define QUARK_SE_IPM_INTERRUPT		57
+#define QUARK_SE_IPM_INTERRUPT			57
 #define QUARK_SE_IPM_ARC_LMT_DIR		QUARK_SE_IPM_OUTBOUND
 #define QUARK_SE_IPM_LMT_ARC_DIR		QUARK_SE_IPM_INBOUND
 
@@ -42,25 +42,20 @@ extern "C" {
 #endif
 
 #define QUARK_SE_IPM_CHANNELS	8
-#define QUARK_SE_IPM_DATA_BYTES	(4 * sizeof(u32_t))
+#define QUARK_SE_IPM_DATA_REGS	4
 #define QUARK_SE_IPM_MAX_ID_VAL	0x7FFFFFFF
 
 /* QUARK_SE EAS section 28.5.1.123 */
-struct __packed quark_se_ipm_ch_ctrl {
-	u32_t ctrl : 31;
-	u32_t irq : 1;
-};
+#define QUARK_SE_IPM_CTRL_CTRL_MASK	BIT_MASK(31)
+#define QUARK_SE_IPM_CTRL_IRQ_BIT	BIT(31)
 
-struct __packed quark_se_ipm_ch_sts {
-	u32_t sts : 1;
-	u32_t irq : 1;
-	u32_t reserved : 30;
-};
+#define QUARK_SE_IPM_STS_STS_BIT	BIT(0)
+#define QUARK_SE_IPM_STS_IRQ_BIT	BIT(1)
 
 struct __packed quark_se_ipm {
-	struct quark_se_ipm_ch_ctrl ctrl;
-	u8_t data[QUARK_SE_IPM_DATA_BYTES]; /* contiguous 32-bit registers */
-	struct quark_se_ipm_ch_sts sts;
+	u32_t ctrl;
+	u32_t data[QUARK_SE_IPM_DATA_REGS]; /* contiguous 32-bit registers */
+	u32_t sts;
 };
 
 /* Base address for mailboxes

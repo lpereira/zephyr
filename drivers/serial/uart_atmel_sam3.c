@@ -24,7 +24,7 @@
 #include <board.h>
 #include <init.h>
 #include <uart.h>
-#include <sections.h>
+#include <linker/sections.h>
 
 /* UART registers struct */
 struct _uart {
@@ -79,14 +79,6 @@ struct uart_sam3_dev_data_t {
 #define UART_BRGR(dev)	(*((volatile u32_t *)(DEV_CFG(dev)->base + 0x20)))
 
 /* bits */
-#define UART_CR_RSTRX	(1 << 2)
-#define UART_CR_RSTTX	(1 << 3)
-#define UART_CR_RXEN	(1 << 4)
-#define UART_CR_RXDIS	(1 << 5)
-#define UART_CR_TXEN	(1 << 6)
-#define UART_CR_TXDIS	(1 << 7)
-#define UART_CR_RSTSTA	(1 << 8)
-
 #define UART_MR_PARTIY_MASK	(0x0E00)
 #define UART_MR_PARITY_EVEN	(0 << 9)
 #define UART_MR_PARITY_ODD	(1 << 9)
@@ -95,10 +87,6 @@ struct uart_sam3_dev_data_t {
 #define UART_MR_PARITY_NO	(4 << 9)
 
 #define UART_MR_CHMODE_MASK		(0xC000)
-#define UART_MR_CHMODE_NORMAL		(0 << 14)
-#define UART_MR_CHMODE_AUTOMATIC	(1 << 14)
-#define UART_MR_CHMODE_LOCAL_LOOPBACK	(2 << 14)
-#define UART_MR_CHMODE_REMOTE_LOOPBACK	(3 << 14)
 
 #define UART_INT_RXRDY		(1 << 0)
 #define UART_INT_TXRDY		(1 << 1)
@@ -154,19 +142,22 @@ static void baudrate_set(struct device *dev,
  * This routine is called to reset the chip in a quiescent state.
  * It is assumed that this function is called only once per UART.
  *
+ * @deprecated This driver will be deprecated. Please use uart_sam.c,
+ *             SAM family driver instead.
+ *
  * @param dev UART device struct
  *
  * @return 0
  */
-static int uart_sam3_init(struct device *dev)
+static int __deprecated uart_sam3_init(struct device *dev)
 {
 	volatile struct _uart *uart = UART_STRUCT(dev);
 
 	/* Enable UART clock in PMC */
-	__PMC->pcer0 = (1 << PID_UART);
+	PMC->PMC_PCER0 = (1 << ID_UART);
 
 	/* Detach pins PA8 and PA9 from PIO controller */
-	__PIOA->pdr = (1 << 8) | (1 << 9);
+	PIOA->PIO_PDR = (1 << 8) | (1 << 9);
 
 	/* Disable PDC (DMA) */
 	uart->pdc_ptcr = UART_PDC_PTCR_RXTDIS | UART_PDC_PTCR_TXTDIS;
@@ -241,7 +232,7 @@ static const struct uart_driver_api uart_sam3_driver_api = {
 };
 
 static const struct uart_device_config uart_sam3_dev_cfg_0 = {
-	.base = (u8_t *)UART_ADDR,
+	.base = (u8_t *)UART,
 	.sys_clk_freq = CONFIG_UART_ATMEL_SAM3_CLK_FREQ,
 };
 

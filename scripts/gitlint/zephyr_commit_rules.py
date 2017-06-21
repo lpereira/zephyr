@@ -1,5 +1,6 @@
-from gitlint.rules import CommitRule, RuleViolation
-from gitlint.options import IntOption
+from gitlint.rules import CommitRule, RuleViolation, TitleRegexMatches, CommitMessageTitle, LineRule, CommitMessageBody
+from gitlint.options import IntOption, BoolOption, StrOption, ListOption
+import re
 
 """
 The classes below are examples of user-defined CommitRules. Commit rules are gitlint rules that
@@ -32,7 +33,6 @@ class BodyMaxLineCount(CommitRule):
             message = "Body contains too many lines ({0} > {1})".format(line_count, max_line_count)
             return [RuleViolation(self.id, message, line_nr=1)]
 
-
 class SignedOffBy(CommitRule):
     """ This rule will enforce that each commit contains a "Signed-Off-By" line.
     We keep things simple here and just check whether the commit body contains a line that starts with "Signed-Off-By".
@@ -45,8 +45,38 @@ class SignedOffBy(CommitRule):
     id = "UC2"
 
     def validate(self, commit):
+        flags = re.UNICODE
+        flags |= re.IGNORECASE
         for line in commit.message.body:
             if line.lower().startswith("signed-off-by"):
-                return
-
+                if not re.search('(^)Signed-off-by: ([-\w.]+) ([-\w.]+) (.*)', line, flags=flags):
+                    return [RuleViolation(self.id, "Signed-off-by: must have a full name", line_nr=1)]
+                else:
+                    return
         return [RuleViolation(self.id, "Body does not contain a 'Signed-Off-By' line", line_nr=1)]
+
+
+class TitleStartsWithSubsystem(LineRule):
+    name = "title-starts-with-subsystem"
+    id = "UC3"
+    target = CommitMessageTitle
+    options_spec = [StrOption('regex', ".*", "Regex the title should match")]
+
+    def validate(self, title, _commit):
+        regex = self.options['regex'].value
+        pattern = re.compile(regex, re.UNICODE)
+        violation_message = "Title does not follow <subsystem>: <subject>"
+        if not pattern.search(title):
+            return [RuleViolation(self.id, violation_message, title)]
+
+class MaxLineLengthExceptions(LineRule):
+    name = "max-line-length-with-exceptions"
+    id = "UC4"
+    target = CommitMessageBody
+    options_spec = [IntOption('line-length', 80, "Max line length")]
+    violation_message = "Line exceeds max length ({0}>{1})"
+
+    def validate(self, line, _commit):
+        max_length = self.options['line-length'].value
+        if len(line) > max_length and not line.startswith('Signed-off-by'):
+            return [RuleViolation(self.id, self.violation_message.format(len(line), max_length), line)]

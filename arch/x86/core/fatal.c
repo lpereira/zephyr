@@ -12,7 +12,7 @@
  */
 
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 
 #include <kernel.h>
 #include <kernel_structs.h>
@@ -68,7 +68,7 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 		printk("***** Invalid Exit Software Error! *****\n");
 		break;
 
-#if defined(CONFIG_STACK_CANARIES)
+#if defined(CONFIG_STACK_CANARIES) || defined(CONFIG_STACK_SENTINEL)
 	case _NANO_ERR_STACK_CHK_FAIL:
 		printk("***** Stack Check Fail! *****\n");
 		break;

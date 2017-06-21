@@ -13,12 +13,13 @@
 #include <misc/byteorder.h>
 #include <misc/util.h>
 
-#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_AVDTP)
-#include <bluetooth/log.h>
 #include <bluetooth/hci.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/l2cap.h>
 #include <bluetooth/avdtp.h>
+
+#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BLUETOOTH_DEBUG_AVDTP)
+#include "common/log.h"
 
 #include "hci_core.h"
 #include "conn_internal.h"
@@ -159,10 +160,6 @@ void bt_avdtp_l2cap_recv(struct bt_l2cap_chan *chan, struct net_buf *buf)
 	BT_DBG("msg_type[0x%02x] sig_id[0x%02x] tid[0x%02x]",
 		msgtype, sigid, tid);
 	net_buf_pull(buf, sizeof(*hdr));
-
-	if (msgtype > BT_AVDTP_REJECT) {
-		return;
-	}
 
 	/* validate if there is an outstanding resp expected*/
 	if (msgtype != BT_AVDTP_CMD) {

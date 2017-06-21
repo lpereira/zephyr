@@ -14,7 +14,7 @@
 #include <kernel_structs.h>
 #include <debug/object_tracing_common.h>
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <wait_q.h>
 #include <misc/dlist.h>
 #include <init.h>
@@ -37,7 +37,9 @@ struct k_pipe_async {
 extern struct k_pipe _k_pipe_list_start[];
 extern struct k_pipe _k_pipe_list_end[];
 
+#ifdef CONFIG_OBJECT_TRACING
 struct k_pipe *_trace_list_k_pipe;
+#endif	/* CONFIG_OBJECT_TRACING */
 
 #if (CONFIG_NUM_PIPE_ASYNC_MSGS > 0)
 
@@ -685,8 +687,6 @@ void k_pipe_block_put(struct k_pipe *pipe, struct k_mem_block *block,
 	struct k_pipe_async  *async_desc;
 	size_t                dummy_bytes_written;
 
-	ARG_UNUSED(bytes_to_write);
-
 	/* For simplicity, always allocate an asynchronous descriptor */
 	_pipe_async_alloc(&async_desc);
 
@@ -696,7 +696,7 @@ void k_pipe_block_put(struct k_pipe *pipe, struct k_mem_block *block,
 	async_desc->thread.prio = k_thread_priority_get(_current);
 
 	(void) _k_pipe_put_internal(pipe, async_desc, block->data,
-				    block->req_size, &dummy_bytes_written,
-				    block->req_size, K_FOREVER);
+				    bytes_to_write, &dummy_bytes_written,
+				    bytes_to_write, K_FOREVER);
 }
 #endif

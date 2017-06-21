@@ -14,7 +14,7 @@
 #include <kernel_structs.h>
 #include <debug/object_tracing_common.h>
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <string.h>
 #include <wait_q.h>
 #include <misc/dlist.h>
@@ -23,9 +23,9 @@
 extern struct k_msgq _k_msgq_list_start[];
 extern struct k_msgq _k_msgq_list_end[];
 
-struct k_msgq *_trace_list_k_msgq;
-
 #ifdef CONFIG_OBJECT_TRACING
+
+struct k_msgq *_trace_list_k_msgq;
 
 /*
  * Complete initialization of statically defined message queues.

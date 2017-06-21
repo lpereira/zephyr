@@ -17,12 +17,12 @@
 #include <misc/printk.h>
 #include <misc/stack.h>
 #include <drivers/rand32.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <toolchain.h>
 #include <kernel_structs.h>
 #include <device.h>
 #include <init.h>
-#include <linker-defs.h>
+#include <linker/linker-defs.h>
 #include <ksched.h>
 #include <version.h>
 #include <string.h>
@@ -37,7 +37,14 @@ const char * const build_timestamp = BUILD_TIMESTAMP;
 
 /* boot banner items */
 
-#define BOOT_BANNER "BOOTING ZEPHYR OS v" KERNEL_VERSION_STRING
+#if defined(CONFIG_BOOT_DELAY) && CONFIG_BOOT_DELAY > 0
+#define BOOT_DELAY_BANNER " (delaying boot "	\
+	STRINGIFY(CONFIG_BOOT_DELAY) "ms)"
+#else
+#define BOOT_DELAY_BANNER ""
+#endif
+#define BOOT_BANNER "BOOTING ZEPHYR OS v"	\
+	KERNEL_VERSION_STRING BOOT_DELAY_BANNER
 
 #if !defined(CONFIG_BOOT_BANNER)
 #define PRINT_BOOT_BANNER() do { } while (0)
@@ -51,11 +58,19 @@ const char * const build_timestamp = BUILD_TIMESTAMP;
 /* boot time measurement items */
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
-u64_t __noinit __start_tsc; /* timestamp when kernel starts */
-u64_t __noinit __main_tsc;  /* timestamp when main task starts */
-u64_t __noinit __idle_tsc;  /* timestamp when CPU goes idle */
+u64_t __noinit __start_time_stamp; /* timestamp when kernel starts */
+u64_t __noinit __main_time_stamp;  /* timestamp when main task starts */
+u64_t __noinit __idle_time_stamp;  /* timestamp when CPU goes idle */
 #endif
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+u64_t __noinit __start_swap_tsc;
+u64_t __noinit __end_swap_tsc;
+u64_t __noinit __start_intr_tsc;
+u64_t __noinit __end_intr_tsc;
+u64_t __noinit __start_tick_tsc;
+u64_t __noinit __end_tick_tsc;
+#endif
 /* init/main and idle threads */
 
 #define IDLE_STACK_SIZE CONFIG_IDLE_STACK_SIZE
@@ -70,11 +85,14 @@ u64_t __noinit __idle_tsc;  /* timestamp when CPU goes idle */
 
 #define MAIN_STACK_SIZE CONFIG_MAIN_STACK_SIZE
 
-char __noinit __stack _main_stack[MAIN_STACK_SIZE];
-char __noinit __stack _idle_stack[IDLE_STACK_SIZE];
+K_THREAD_STACK_DEFINE(_main_stack, MAIN_STACK_SIZE);
+K_THREAD_STACK_DEFINE(_idle_stack, IDLE_STACK_SIZE);
 
-k_tid_t const _main_thread = (k_tid_t)_main_stack;
-k_tid_t const _idle_thread = (k_tid_t)_idle_stack;
+static struct k_thread _main_thread_s;
+static struct k_thread _idle_thread_s;
+
+k_tid_t const _main_thread = (k_tid_t)&_main_thread_s;
+k_tid_t const _idle_thread = (k_tid_t)&_idle_thread_s;
 
 /*
  * storage space for the interrupt stack
@@ -87,7 +105,7 @@ k_tid_t const _idle_thread = (k_tid_t)_idle_stack;
 #if CONFIG_ISR_STACK_SIZE & (STACK_ALIGN - 1)
     #error "ISR_STACK_SIZE must be a multiple of the stack alignment"
 #endif
-char __noinit __stack _interrupt_stack[CONFIG_ISR_STACK_SIZE];
+K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 	#include <misc/dlist.h>
@@ -109,15 +127,13 @@ void k_call_stacks_analyze(void)
 #endif /* CONFIG_ARC */
 
 	printk("Kernel stacks:\n");
-	stack_analyze("main     ", _main_stack, sizeof(_main_stack));
-	stack_analyze("idle     ", _idle_stack, sizeof(_idle_stack));
+	STACK_ANALYZE("main     ", _main_stack);
+	STACK_ANALYZE("idle     ", _idle_stack);
 #if defined(CONFIG_ARC) && CONFIG_RGF_NUM_BANKS != 1
-	stack_analyze("firq     ", _firq_stack, sizeof(_firq_stack));
+	STACK_ANALYZE("firq     ", _firq_stack);
 #endif /* CONFIG_ARC */
-	stack_analyze("interrupt", _interrupt_stack,
-		      sizeof(_interrupt_stack));
-	stack_analyze("workqueue", sys_work_q_stack,
-		      sizeof(sys_work_q_stack));
+	STACK_ANALYZE("interrupt", _interrupt_stack);
+	STACK_ANALYZE("workqueue", sys_work_q_stack);
 
 #endif /* CONFIG_INIT_STACKS && CONFIG_PRINTK */
 }
@@ -185,9 +201,9 @@ static void _main(void *unused1, void *unused2, void *unused3)
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	/* record timestamp for kernel's _main() function */
-	extern u64_t __main_tsc;
+	extern u64_t __main_time_stamp;
 
-	__main_tsc = _tsc_read();
+	__main_time_stamp = (u64_t)k_cycle_get_32();
 #endif
 
 	extern void main(void);
@@ -231,6 +247,7 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 	_current = dummy_thread;
 
 	dummy_thread->base.user_options = K_ESSENTIAL;
+	dummy_thread->base.thread_state = _THREAD_DUMMY;
 #endif
 
 	/* _kernel.ready_q is all zeroes */
@@ -263,15 +280,15 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 	 */
 	_ready_q.cache = _main_thread;
 
-	_new_thread(_main_stack, MAIN_STACK_SIZE,
-		    _main, NULL, NULL, NULL,
+	_new_thread(_main_thread, _main_stack,
+		    MAIN_STACK_SIZE, _main, NULL, NULL, NULL,
 		    CONFIG_MAIN_THREAD_PRIORITY, K_ESSENTIAL);
 	_mark_thread_as_started(_main_thread);
 	_add_thread_to_ready_q(_main_thread);
 
 #ifdef CONFIG_MULTITHREADING
-	_new_thread(_idle_stack, IDLE_STACK_SIZE,
-		    idle, NULL, NULL, NULL,
+	_new_thread(_idle_thread, _idle_stack,
+		    IDLE_STACK_SIZE, idle, NULL, NULL, NULL,
 		    K_LOWEST_THREAD_PRIO, K_ESSENTIAL);
 	_mark_thread_as_started(_idle_thread);
 	_add_thread_to_ready_q(_idle_thread);
@@ -287,7 +304,8 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 static void switch_to_main_thread(void)
 {
 #ifdef CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN
-	_arch_switch_to_main_thread(_main_stack, MAIN_STACK_SIZE, _main);
+	_arch_switch_to_main_thread(_main_thread, _main_stack, MAIN_STACK_SIZE,
+				    _main);
 #else
 	/*
 	 * Context switch to main task (entry function is _main()): the
@@ -316,12 +334,10 @@ extern void *__stack_chk_guard;
 FUNC_NORETURN void _Cstart(void)
 {
 #ifdef CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN
-	void *dummy_thread = NULL;
+	struct k_thread *dummy_thread = NULL;
 #else
-	/* floating point is NOT used during kernel init */
-
-	char __stack dummy_stack[_K_THREAD_NO_FLOAT_SIZEOF];
-	void *dummy_thread = dummy_stack;
+	struct k_thread dummy_thread_memory;
+	struct k_thread *dummy_thread = &dummy_thread_memory;
 #endif
 
 	/*
@@ -344,7 +360,9 @@ FUNC_NORETURN void _Cstart(void)
 	/* display boot banner */
 
 	PRINT_BOOT_BANNER();
-
+#if defined(CONFIG_BOOT_DELAY) && CONFIG_BOOT_DELAY > 0
+	k_sleep(CONFIG_BOOT_DELAY);
+#endif
 	switch_to_main_thread();
 
 	/*

@@ -21,7 +21,7 @@
 
 #include <kernel.h>
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <misc/__assert.h>
 #include <sys_clock.h>
 #include <drivers/system_timer.h>
@@ -211,6 +211,11 @@ void _timer_int_handler(void *unused)
 {
 	ARG_UNUSED(unused);
 
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+	extern void read_systick_start_of_tick_handler(void);
+	read_systick_start_of_tick_handler();
+#endif
+
 #ifdef CONFIG_KERNEL_EVENT_LOGGER_INTERRUPT
 	extern void _sys_k_event_logger_interrupt(void);
 	_sys_k_event_logger_interrupt();
@@ -336,6 +341,11 @@ void _timer_int_handler(void *unused)
 	_sys_clock_tick_announce();
 
 #endif /* CONFIG_SYS_POWER_MANAGEMENT */
+
+#ifdef CONFIG_EXECUTION_BENCHMARKING
+	extern void read_systick_end_of_tick_handler(void);
+	read_systick_end_of_tick_handler();
+#endif
 
 	extern void _ExcExit(void);
 	_ExcExit();

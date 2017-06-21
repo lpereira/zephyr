@@ -34,7 +34,7 @@ Hardware
 
 The CC3220SF SoC has two MCUs:
 
-#. Applications MCU - an ARM® Cortex®-M4 Core at 80 MHz, with 256Kb RAM,
+#. Applications MCU - an ARM |reg| Cortex |reg|-M4 Core at 80 MHz, with 256Kb RAM,
    and access to external serial 1Mb flash with bootloader and peripheral
    drivers in ROM.
 
@@ -168,7 +168,7 @@ Debugging
 =========
 
 It is possible to enable loading and debugging of an application via
-OpenOCD and gdb, by linking and locating the program completely in SRAM.
+openocd and gdb, by linking and locating the program completely in SRAM.
 
 Prerequisites:
 --------------

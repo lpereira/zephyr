@@ -14,7 +14,7 @@
 #include <kernel.h>
 
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 
 #include <kernel_structs.h>
 #include <misc/printk.h>
@@ -133,6 +133,43 @@ void _thread_monitor_exit(struct k_thread *thread)
 }
 #endif /* CONFIG_THREAD_MONITOR */
 
+#ifdef CONFIG_STACK_SENTINEL
+/* Check that the stack sentinel is still present
+ *
+ * The stack sentinel feature writes a magic value to the lowest 4 bytes of
+ * the thread's stack when the thread is initialized. This value gets checked
+ * in a few places:
+ *
+ * 1) In k_yield() if the current thread is not swapped out
+ * 2) After servicing a non-nested interrupt
+ * 3) In _Swap(), check the sentinel in the outgoing thread
+ * 4) When a thread returns from its entry function to cooperatively terminate
+ *
+ * Item 2 requires support in arch/ code.
+ *
+ * If the check fails, the thread will be terminated appropriately through
+ * the system fatal error handler.
+ */
+void _check_stack_sentinel(void)
+{
+	u32_t *stack;
+
+	if (_is_thread_prevented_from_running(_current)) {
+		/* Filter out threads that are dummy threads or already
+		 * marked for termination (_THREAD_DEAD)
+		 */
+		return;
+	}
+
+	stack = (u32_t *)_current->stack_info.start;
+	if (*stack != STACK_SENTINEL) {
+		/* Restore it so further checks don't trigger this same error */
+		*stack = STACK_SENTINEL;
+		_k_except_reason(_NANO_ERR_STACK_CHK_FAIL);
+	}
+}
+#endif
+
 /*
  * Common thread entry point function (used by all threads)
  *
@@ -148,6 +185,9 @@ FUNC_NORETURN void _thread_entry(void (*entry)(void *, void *, void *),
 {
 	entry(p1, p2, p3);
 
+#ifdef CONFIG_STACK_SENTINEL
+	_check_stack_sentinel();
+#endif
 #ifdef CONFIG_MULTITHREADING
 	if (_is_thread_essential()) {
 		_k_except_reason(_NANO_ERR_INVALID_TASK_EXIT);
@@ -208,21 +248,32 @@ static void schedule_new_thread(struct k_thread *thread, s32_t delay)
 #endif
 
 #ifdef CONFIG_MULTITHREADING
+
+k_tid_t k_thread_create(struct k_thread *new_thread, char *stack,
+			size_t stack_size, void (*entry)(void *, void *, void*),
+			void *p1, void *p2, void *p3,
+			int prio, u32_t options, s32_t delay)
+{
+	__ASSERT(!_is_in_isr(), "Threads may not be created in ISRs");
+	_new_thread(new_thread, stack, stack_size, entry, p1, p2, p3, prio,
+		    options);
+
+	schedule_new_thread(new_thread, delay);
+	return new_thread;
+}
+
+
 k_tid_t k_thread_spawn(char *stack, size_t stack_size,
 			void (*entry)(void *, void *, void*),
 			void *p1, void *p2, void *p3,
 			int prio, u32_t options, s32_t delay)
 {
-	__ASSERT(!_is_in_isr(), "");
-
 	struct k_thread *new_thread = (struct k_thread *)stack;
 
-	_new_thread(stack, stack_size, entry, p1, p2, p3, prio, options);
-
-	schedule_new_thread(new_thread, delay);
-
-	return new_thread;
+	return k_thread_create(new_thread, stack, stack_size, entry, p1, p2,
+			       p3, prio, options, delay);
 }
+
 #endif
 
 int k_thread_cancel(k_tid_t tid)
@@ -264,7 +315,7 @@ void _k_thread_group_op(u32_t groups, void (*func)(struct k_thread *))
 	_FOREACH_STATIC_THREAD(thread_data) {
 		if (is_in_any_group(thread_data, groups)) {
 			key = irq_lock();
-			func(thread_data->thread);
+			func(thread_data->init_thread);
 			irq_unlock(key);
 		}
 	}
@@ -359,6 +410,7 @@ void _init_static_threads(void)
 
 	_FOREACH_STATIC_THREAD(thread_data) {
 		_new_thread(
+			thread_data->init_thread,
 			thread_data->init_stack,
 			thread_data->init_stack_size,
 			thread_data->init_entry,
@@ -368,7 +420,7 @@ void _init_static_threads(void)
 			thread_data->init_prio,
 			thread_data->init_options);
 
-		thread_data->thread->init_data = thread_data;
+		thread_data->init_thread->init_data = thread_data;
 	}
 
 	_sched_lock();
@@ -385,7 +437,7 @@ void _init_static_threads(void)
 	key = irq_lock();
 	_FOREACH_STATIC_THREAD(thread_data) {
 		if (thread_data->init_delay != K_FOREVER) {
-			schedule_new_thread(thread_data->thread,
+			schedule_new_thread(thread_data->init_thread,
 					    thread_data->init_delay);
 		}
 	}

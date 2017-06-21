@@ -7,7 +7,7 @@
  */
 
 #include <zephyr.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -35,7 +35,8 @@ static struct in6_addr in6addr_my = MY_IP6ADDR;
 #define MY_PORT 4242
 
 #define STACKSIZE 2000
-char __noinit __stack thread_stack[STACKSIZE];
+K_THREAD_STACK_DEFINE(thread_stack, STACKSIZE);
+static struct k_thread thread_data;
 
 #define MAX_DBG_PRINT 64
 
@@ -357,7 +358,7 @@ void main(void)
 
 	printk("Advertising successfully started\n");
 
-	k_thread_spawn(&thread_stack[0], STACKSIZE,
-		       (k_thread_entry_t)listen,
-		       NULL, NULL, NULL, K_PRIO_COOP(7), 0, 0);
+	k_thread_create(&thread_data, thread_stack, STACKSIZE,
+			(k_thread_entry_t)listen,
+			NULL, NULL, NULL, K_PRIO_COOP(7), 0, 0);
 }

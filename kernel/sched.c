@@ -221,6 +221,23 @@ void _pend_current_thread(_wait_q_t *wait_q, s32_t timeout)
 	_pend_thread(_current, wait_q, timeout);
 }
 
+#if defined(CONFIG_PREEMPT_ENABLED) && defined(CONFIG_KERNEL_DEBUG)
+/* debug aid */
+static void _dump_ready_q(void)
+{
+	K_DEBUG("bitmaps: ");
+	for (int bitmap = 0; bitmap < K_NUM_PRIO_BITMAPS; bitmap++) {
+		K_DEBUG("%x", _ready_q.prio_bmap[bitmap]);
+	}
+	K_DEBUG("\n");
+	for (int prio = 0; prio < K_NUM_PRIORITIES; prio++) {
+		K_DEBUG("prio: %d, head: %p\n",
+			prio - _NUM_COOP_PRIO,
+			sys_dlist_peek_head(&_ready_q.q[prio]));
+	}
+}
+#endif  /* CONFIG_PREEMPT_ENABLED && CONFIG_KERNEL_DEBUG */
+
 /*
  * Check if there is a thread of higher prio than the current one. Should only
  * be called if we already know that the current thread is preemptible.
@@ -231,8 +248,9 @@ int __must_switch_threads(void)
 	K_DEBUG("current prio: %d, highest prio: %d\n",
 		_current->base.prio, _get_highest_ready_prio());
 
-	extern void _dump_ready_q(void);
+#ifdef CONFIG_KERNEL_DEBUG
 	_dump_ready_q();
+#endif  /* CONFIG_KERNEL_DEBUG */
 
 	return _is_prio_higher(_get_highest_ready_prio(), _current->base.prio);
 #else
@@ -297,6 +315,9 @@ void k_yield(void)
 
 	if (_current == _get_next_ready_thread()) {
 		irq_unlock(key);
+#ifdef CONFIG_STACK_SENTINEL
+		_check_stack_sentinel();
+#endif
 	} else {
 		_Swap(key);
 	}
@@ -361,21 +382,6 @@ k_tid_t k_current_get(void)
 	return _current;
 }
 
-/* debug aid */
-void _dump_ready_q(void)
-{
-	K_DEBUG("bitmaps: ");
-	for (int bitmap = 0; bitmap < K_NUM_PRIO_BITMAPS; bitmap++) {
-		K_DEBUG("%x", _ready_q.prio_bmap[bitmap]);
-	}
-	K_DEBUG("\n");
-	for (int prio = 0; prio < K_NUM_PRIORITIES; prio++) {
-		K_DEBUG("prio: %d, head: %p\n",
-			prio - _NUM_COOP_PRIO,
-			sys_dlist_peek_head(&_ready_q.q[prio]));
-	}
-}
-
 #ifdef CONFIG_TIMESLICING
 extern s32_t _time_slice_duration;    /* Measured in ms */
 extern s32_t _time_slice_elapsed;     /* Measured in ms */
@@ -391,7 +397,6 @@ void k_sched_time_slice_set(s32_t duration_in_ms, int prio)
 	_time_slice_prio_ceiling = prio;
 }
 
-#ifdef CONFIG_TICKLESS_KERNEL
 int _is_thread_time_slicing(struct k_thread *thread)
 {
 	/*
@@ -418,21 +423,20 @@ int _is_thread_time_slicing(struct k_thread *thread)
 /* Should be called only immediately before a thread switch */
 void _update_time_slice_before_swap(void)
 {
+#ifdef CONFIG_TICKLESS_KERNEL
 	if (!_is_thread_time_slicing(_get_next_ready_thread())) {
 		return;
 	}
-
-	/* Restart time slice count at new thread switch */
-	_time_slice_elapsed = 0;
 
 	u32_t remaining = _get_remaining_program_time();
 
 	if (!remaining || (_time_slice_duration < remaining)) {
 		_set_time(_time_slice_duration);
 	}
-}
 #endif
-
+	/* Restart time slice count at new thread switch */
+	_time_slice_elapsed = 0;
+}
 #endif /* CONFIG_TIMESLICING */
 
 int k_is_preempt_thread(void)

@@ -21,7 +21,6 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
-#include <gatt/gap.h>
 #include <gatt/dis.h>
 #include <gatt/bas.h>
 
@@ -30,7 +29,6 @@
 #define SENSOR_1_NAME				"Temperature Sensor 1"
 #define SENSOR_2_NAME				"Temperature Sensor 2"
 #define SENSOR_3_NAME				"Humidity Sensor"
-#define APPEARANCE_THERMOMETER			0x0300
 
 /* Sensor Internal Update Interval [seconds] */
 #define SENSOR_1_UPDATE_IVAL			5
@@ -331,6 +329,8 @@ static struct bt_gatt_attr ess_attrs[] = {
 			   read_es_measurement, NULL, &sensor_3.meas),
 };
 
+static struct bt_gatt_service ess_svc = BT_GATT_SERVICE(ess_attrs);
+
 static void ess_simulate(void)
 {
 	static u8_t i;
@@ -396,8 +396,7 @@ static void bt_ready(int err)
 
 	printk("Bluetooth initialized\n");
 
-	gap_init(DEVICE_NAME, APPEARANCE_THERMOMETER);
-	bt_gatt_register(ess_attrs, ARRAY_SIZE(ess_attrs));
+	bt_gatt_service_register(&ess_svc);
 	bas_init();
 	dis_init(CONFIG_SOC, "ACME");
 
@@ -417,7 +416,7 @@ static void auth_passkey_display(struct bt_conn *conn, unsigned int passkey)
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
-	printk("Passkey for %s: %u\n", addr, passkey);
+	printk("Passkey for %s: %06u\n", addr, passkey);
 }
 
 static void auth_cancel(struct bt_conn *conn)

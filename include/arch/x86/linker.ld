@@ -40,12 +40,12 @@
 #define _LINKER
 
 #define _ASMLANGUAGE
-#include <linker-defs.h>
+#include <linker/linker-defs.h>
 #include <offsets.h>
 #include <misc/util.h>
 #define MMU_PAGE_SIZE KB(4)
 
-#include <linker-tool.h>
+#include <linker/linker-tool.h>
 
 #ifdef CONFIG_XIP
 	#define ROMABLE_REGION ROM
@@ -93,12 +93,20 @@ SECTIONS
 
 	. = ALIGN(8);
 	_idt_base_address = .;
+#ifdef LINKER_PASS2
 	KEEP(*(staticIdt))
+#else
+	. += CONFIG_IDT_NUM_VECTORS * 8;
+#endif
 
 #ifndef CONFIG_X86_FIXED_IRQ_MAPPING
 	. = ALIGN(4);
 	_irq_to_interrupt_vector = .;
+#ifdef LINKER_PASS2
 	KEEP(*(irq_int_vector_map))
+#else
+	. += CONFIG_MAX_IRQ_LINES;
+#endif
 #endif
 
 #ifdef CONFIG_CUSTOM_RODATA_LD
@@ -122,8 +130,6 @@ SECTIONS
 	KEXEC_PGALIGN_PAD(MMU_PAGE_SIZE)
 	_image_ram_start = .;
 	__data_ram_start = .;
-	*(.top_of_image_ram)
-	*(.top_of_image_ram.*)
 	*(.data)
 	*(".data.*")
 
@@ -132,6 +138,13 @@ SECTIONS
 #include <custom-rwdata.ld>
 #endif
 
+#ifdef CONFIG_X86_MMU
+       /* Page Tables are located here if MMU is enabled.*/
+	. = ALIGN(4096);
+	__mmu_tables_start = .;
+	KEEP(*(.mmu_data));
+	__mmu_tables_end = .;
+#endif
 	. = ALIGN(4);
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
@@ -178,9 +191,6 @@ SECTIONS
 	 */
 	*(.noinit)
 	*(".noinit.*")
-
-	*(.bottom_of_image_ram)
-	*(.bottom_of_image_ram.*)
 	} GROUP_LINK_IN(RAMABLE_REGION)
 
 
@@ -194,6 +204,7 @@ SECTIONS
 
 	GROUP_END(RAMABLE_REGION)
 
+#ifndef LINKER_PASS2
 	/* static interrupts */
 	SECTION_PROLOGUE(intList, (OPTIONAL),)
 	{
@@ -205,6 +216,35 @@ SECTIONS
 	KEEP(*(.gnu.linkonce.intList.*))
 	__INT_LIST_END__ = .;
 	} > IDT_LIST
+
+#ifdef CONFIG_X86_MMU
+	/* Memory management unit*/
+	SECTION_PROLOGUE(mmulist, (OPTIONAL),)
+	{
+	/* get size of the mmu lists needed for gen_mmu.py*/
+	LONG((__MMU_LIST_END__ - __MMU_LIST_START__) / __MMU_REGION_SIZEOF)
+	/* Get the start of mmu tables in data section so that the address
+	 * of the page tables can be calculated.
+	 */
+	LONG(__mmu_tables_start)
+	__MMU_LIST_START__ = .;
+	KEEP(*(.mmulist))
+	__MMU_LIST_END__ = .;
+	} > MMU_LIST
+#endif /* CONFIG_X86_MMU */
+
+#else
+	/DISCARD/ :
+	{
+	KEEP(*(.spurIsr))
+	KEEP(*(.spurNoErrIsr))
+	KEEP(*(.intList))
+	KEEP(*(.gnu.linkonce.intList.*))
+	KEEP(*(.mmulist))
+	}
+#endif
+
+
 
 #ifdef CONFIG_CUSTOM_SECTIONS_LD
 /* Located in project source directory */

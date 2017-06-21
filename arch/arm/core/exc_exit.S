@@ -24,7 +24,7 @@ _ASM_FILE_PROLOGUE
 GTEXT(_ExcExit)
 GTEXT(_IntExit)
 GDATA(_kernel)
-#ifdef CONFIG_TICKLESS_KERNEL
+#ifdef CONFIG_TIMESLICING
 GTEXT(_update_time_slice_before_swap)
 #endif
 
@@ -58,10 +58,15 @@ SECTION_SUBSEC_FUNC(TEXT, _HandlerModeExit, _IntExit)
 
 /* _IntExit falls through to _ExcExit (they are aliases of each other) */
 
-#ifdef CONFIG_TICKLESS_KERNEL
+#ifdef CONFIG_TIMESLICING
     push {lr}
     bl _update_time_slice_before_swap
+#if defined(CONFIG_ARMV6_M)
+    pop {r0}
+    mov lr, r0
+#else
     pop {lr}
+#endif /* CONFIG_ARMV6_M */
 #endif
 
 /**
@@ -102,5 +107,16 @@ _ExcExitWithGdbStub:
 
 _EXIT_EXC:
 #endif /* CONFIG_PREEMPT_ENABLED */
+
+#ifdef CONFIG_STACK_SENTINEL
+    push {lr}
+    bl _check_stack_sentinel
+#if defined(CONFIG_ARMV6_M)
+    pop {r0}
+    mov lr, r0
+#else
+    pop {lr}
+#endif /* CONFIG_ARMV6_M */
+#endif /* CONFIG_STACK_SENTINEL */
 
     bx lr

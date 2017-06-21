@@ -19,7 +19,7 @@
 #include <init.h>
 #include <kernel.h>
 #include <toolchain.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <string.h>
 #include <errno.h>
 
@@ -59,7 +59,7 @@
 
 NET_STACK_DEFINE(RX, rx_stack, CONFIG_NET_RX_STACK_SIZE,
 		 CONFIG_NET_RX_STACK_SIZE + CONFIG_NET_RX_STACK_RPL);
-
+static struct k_thread rx_thread_data;
 static struct k_fifo rx_queue;
 static k_tid_t rx_tid;
 static K_SEM_DEFINE(startup_sync, 0, UINT_MAX);
@@ -142,7 +142,8 @@ static void net_rx_thread(void)
 {
 	struct net_pkt *pkt;
 
-	NET_DBG("Starting RX thread (stack %zu bytes)", sizeof(rx_stack));
+	NET_DBG("Starting RX thread (stack %zu bytes)",
+		K_THREAD_STACK_SIZEOF(rx_stack));
 
 	/* Starting TX side. The ordering is important here and the TX
 	 * can only be started when RX side is ready to receive packets.
@@ -164,7 +165,8 @@ static void net_rx_thread(void)
 
 		pkt = k_fifo_get(&rx_queue, K_FOREVER);
 
-		net_analyze_stack("RX thread", rx_stack, sizeof(rx_stack));
+		net_analyze_stack("RX thread", rx_stack,
+				  K_THREAD_STACK_SIZEOF(rx_stack));
 
 #if defined(CONFIG_NET_STATISTICS) || defined(CONFIG_NET_DEBUG_CORE)
 		pkt_len = net_pkt_get_len(pkt);
@@ -186,10 +188,11 @@ static void init_rx_queue(void)
 {
 	k_fifo_init(&rx_queue);
 
-	rx_tid = k_thread_spawn(rx_stack, sizeof(rx_stack),
-				(k_thread_entry_t)net_rx_thread,
-				NULL, NULL, NULL, K_PRIO_COOP(8),
-				K_ESSENTIAL, K_NO_WAIT);
+	rx_tid = k_thread_create(&rx_thread_data, rx_stack,
+				 K_THREAD_STACK_SIZEOF(rx_stack),
+				 (k_thread_entry_t)net_rx_thread,
+				 NULL, NULL, NULL, K_PRIO_COOP(8),
+				 K_ESSENTIAL, K_NO_WAIT);
 }
 
 #if defined(CONFIG_NET_IP_ADDR_CHECK)

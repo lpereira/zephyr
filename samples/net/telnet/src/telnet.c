@@ -11,7 +11,7 @@
 #endif
 
 #include <zephyr.h>
-#include <sections.h>
+#include <linker/sections.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -20,7 +20,8 @@
 #include <net/net_mgmt.h>
 
 #define STACKSIZE 2000
-char __noinit __stack thread_stack[STACKSIZE];
+K_THREAD_STACK_DEFINE(thread_stack, STACKSIZE);
+static struct k_thread thread_data;
 
 #if defined(CONFIG_NET_DHCPV4)
 static struct net_mgmt_event_callback mgmt_cb;
@@ -144,7 +145,7 @@ void main(void)
 {
 	NET_INFO("Starting Telnet sample");
 
-	k_thread_spawn(&thread_stack[0], STACKSIZE,
-		       (k_thread_entry_t)network_setup,
-		       NULL, NULL, NULL, K_PRIO_COOP(7), 0, 0);
+	k_thread_create(&thread_data, thread_stack, STACKSIZE,
+			(k_thread_entry_t)network_setup,
+			NULL, NULL, NULL, K_PRIO_COOP(7), 0, 0);
 }

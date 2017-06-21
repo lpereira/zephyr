@@ -40,7 +40,7 @@ config BLUETOOTH_H5
 
 config BLUETOOTH_SPI
 	bool "SPI HCI"
-	select SPI
+	depends on SPI
 	help
 	  Supports Bluetooth ICs using SPI as the communication protocol.
 	  HCI packets are sent and received as single Byte transfers,
@@ -57,13 +57,6 @@ config BLUETOOTH_NO_DRIVER
 endchoice
 
 endif # !BLUETOOTH_CONTROLLER
-
-config BLUETOOTH_DEBUG_HCI_DRIVER
-	bool "Bluetooth HCI driver debug"
-	depends on BLUETOOTH_DEBUG
-	help
-	  This option enables debug support for the chosen
-	  Bluetooth HCI driver
 
 config BLUETOOTH_UART_ON_DEV_NAME
 	string "Device Name of UART Device for Bluetooth"
