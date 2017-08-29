@@ -66,12 +66,20 @@ static void iwdg_stm32_reload(struct device *dev)
 	iwdg->kr.bit.key = STM32_IWDG_KR_RELOAD;
 }
 
+static enum wdt_reboot_reason iwdg_stm32_get_reason(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	return WDT_REASON_UNKNOWN;
+}
+
 static const struct wdt_driver_api iwdg_stm32_api = {
 	.enable = iwdg_stm32_enable,
 	.disable = iwdg_stm32_disable,
 	.get_config = iwdg_stm32_get_config,
 	.set_config = iwdg_stm32_set_config,
 	.reload = iwdg_stm32_reload,
+	.get_reason = iwdg_stm32_get_reason,
 };
 
 static inline int __iwdg_stm32_prescaler(int setting)

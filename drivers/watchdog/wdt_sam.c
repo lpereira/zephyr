@@ -68,12 +68,22 @@ static void wdt_sam_reload(struct device *dev)
 	SYS_LOG_ERR("Function not implemented!");
 }
 
+static enum wdt_reboot_reason wdt_sam_get_reason(struct devuce *dev)
+{
+	ARG_UNUSED(dev);
+
+	SYS_LOG_ERR("Function not implemented!");
+
+	return WDT_REASON_UNKNOWN;
+}
+
 static const struct wdt_driver_api wdt_sam_api = {
 	.enable = wdt_sam_enable,
 	.disable = wdt_sam_disable,
 	.get_config = wdt_sam_get_config,
 	.set_config = wdt_sam_set_config,
-	.reload = wdt_sam_reload
+	.reload = wdt_sam_reload,
+	.get_reason = wdt_sam_get_reason,
 };
 
 static int wdt_sam_init(struct device *dev)

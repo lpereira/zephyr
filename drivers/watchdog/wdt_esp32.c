@@ -217,12 +217,33 @@ static int wdt_esp32_init(struct device *dev)
 	return 0;
 }
 
+static enum wdt_reboot_reason wdt_esp32_get_reason(struct device *dev)
+{
+	volatile u32_t *reg = (u32_t *)RTC_CNTL_RESET_STATE_REG;
+
+	ARG_UNUSED(dev);
+
+	switch (*reg & RTC_CNTL_RESET_CAUSE_PROCPU_M) {
+	case 9: /* Digital core reset by RTC watchdog */
+	case 13: /* CPU reset by RTC watchdog */
+		return WDT_REASON_CPU_RESET;
+	case 15: /* Vdd voltage isn't stable */
+		return WDT_REASON_BROWN_OUT;
+	case 8: /* Reset by timer group 1 (only system reset used) */
+	case 16: /* CPU and RTC modules reset by watchdog */
+		return WDT_REASON_SYS_RESET;
+	default:
+		return WDT_REASON_UNKNOWN;
+	}
+}
+
 static const struct wdt_driver_api wdt_api = {
 	.enable = wdt_esp32_enable,
 	.disable = wdt_esp32_disable,
 	.get_config = wdt_esp32_get_config,
 	.set_config = wdt_esp32_set_config,
-	.reload = wdt_esp32_reload
+	.reload = wdt_esp32_reload,
+	.get_reason = wdt_esp32_get_reason,
 };
 
 DEVICE_AND_API_INIT(wdt_esp32, CONFIG_WDT_ESP32_DEVICE_NAME, wdt_esp32_init,

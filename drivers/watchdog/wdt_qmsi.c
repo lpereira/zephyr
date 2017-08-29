@@ -99,12 +99,20 @@ static void disable(struct device *dev)
 	clk_periph_disable(CLK_PERIPH_WDT_REGISTER);
 }
 
+static enum wdt_reboot_reason get_reason(struct device *dev)
+{
+        ARG_UNUSED(dev);
+
+        return WDT_REASON_UNKNOWN;
+}
+
 static const struct wdt_driver_api api = {
 	.enable = enable,
 	.disable = disable,
 	.get_config = get_config,
 	.set_config = set_config,
 	.reload = reload,
+	.get_reason = get_reason,
 };
 
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT

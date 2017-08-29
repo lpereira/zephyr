@@ -11,10 +11,28 @@
 #include "board.h"
 #include <misc/printk.h>
 
+static const char *get_reason(struct device *dev)
+{
+	switch (wdt_get_reason(dev)) {
+	case WDT_REASON_UNKNOWN:
+		return "unknown";
+	case WDT_REASON_CPU_RESET:
+		return "CPU reset";
+	case WDT_REASON_SYS_RESET:
+		return "system reset";
+	case WDT_REASON_BROWN_OUT:
+		return "brown out";
+	}
+
+	return "?";
+}
+
 /* WDT Requires a callback, there is no interrupt enable / disable. */
 void wdt_example_cb(struct device *dev)
 {
-	printk("watchdog fired\n");
+	printk("Watchdog timer interrupt called. Reason: %s\n",
+	       get_reason(dev));
+
 	wdt_reload(dev);
 }
 
@@ -37,4 +55,6 @@ void main(void)
 	wdt_get_config(wdt_dev, &cfg);
 	printk("timeout: %d\n", cfg.timeout);
 	printk("mode: %d\n", cfg.mode);
+
+	printk("System boot reason: %s\n", get_reason(wdt_dev));
 }

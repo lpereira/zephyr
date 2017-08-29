@@ -140,12 +140,20 @@ static void wdog_cmsdk_apb_reload(struct device *dev)
 	wdog->load = reload_s;
 }
 
+static enum wdt_reboot_reason wdog_cmsdk_apb_get_reason(struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	return WDT_REASON_UNKNOWN;
+}
+
 static const struct wdt_driver_api wdog_cmsdk_apb_api = {
 	.enable = wdog_cmsdk_apb_enable,
 	.disable = wdog_cmsdk_apb_disable,
 	.get_config = wdog_cmsdk_apb_get_config,
 	.set_config = wdog_cmsdk_apb_set_config,
 	.reload = wdog_cmsdk_apb_reload,
+	.get_reason = wdog_cmsdk_apb_get_reason,
 };
 
 #ifdef CONFIG_RUNTIME_NMI

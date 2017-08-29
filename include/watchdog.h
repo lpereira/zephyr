@@ -46,6 +46,15 @@ enum wdt_clock_timeout_cycles {
 	WDT_2_31_CYCLES
 };
 
+/**
+ * WDT reboot reason.
+ */
+enum wdt_reboot_reason {
+	WDT_REASON_UNKNOWN,
+	WDT_REASON_CPU_RESET,
+	WDT_REASON_SYS_RESET,
+	WDT_REASON_BROWN_OUT,
+};
 
 /**
  * WDT configuration struct.
@@ -63,6 +72,7 @@ typedef int (*wdt_api_set_config)(struct device *dev,
 typedef void (*wdt_api_get_config)(struct device *dev,
 				   struct wdt_config *config);
 typedef void (*wdt_api_reload)(struct device *dev);
+typedef enum wdt_reboot_reason (*wdt_api_get_reason)(struct device *dev);
 
 struct wdt_driver_api {
 	wdt_api_enable enable;
@@ -70,6 +80,7 @@ struct wdt_driver_api {
 	wdt_api_get_config get_config;
 	wdt_api_set_config set_config;
 	wdt_api_reload reload;
+	wdt_api_get_reason get_reason;
 };
 
 static inline void wdt_enable(struct device *dev)
@@ -107,6 +118,13 @@ static inline void wdt_reload(struct device *dev)
 	const struct wdt_driver_api *api = dev->driver_api;
 
 	api->reload(dev);
+}
+
+static inline enum wdt_reboot_reason wdt_get_reason(struct device *dev)
+{
+	const struct wdt_driver_api *api = dev->driver_api;
+
+	return api->get_reason(dev);
 }
 
 #ifdef __cplusplus
