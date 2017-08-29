@@ -77,6 +77,17 @@ static enum wdt_reboot_reason wdt_sam_get_reason(struct devuce *dev)
 	return WDT_REASON_UNKNOWN;
 }
 
+static int wdt_sam_access_retained(struct device *dev, u32_t *value, bool read)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(value);
+	ARG_UNUSED(read);
+
+	SYS_LOG_ERR("Function not implemented!");
+
+	return -ENOSYS;
+}
+
 static const struct wdt_driver_api wdt_sam_api = {
 	.enable = wdt_sam_enable,
 	.disable = wdt_sam_disable,
@@ -84,6 +95,7 @@ static const struct wdt_driver_api wdt_sam_api = {
 	.set_config = wdt_sam_set_config,
 	.reload = wdt_sam_reload,
 	.get_reason = wdt_sam_get_reason,
+	.access_retained = wdt_sam_access_retained,
 };
 
 static int wdt_sam_init(struct device *dev)

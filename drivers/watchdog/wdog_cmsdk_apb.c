@@ -147,6 +147,16 @@ static enum wdt_reboot_reason wdog_cmsdk_apb_get_reason(struct device *dev)
 	return WDT_REASON_UNKNOWN;
 }
 
+static int wdog_cmsdk_apb_access_retained(struct device *dev, u32_t *value,
+					  bool read)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(value);
+	ARG_UNUSED(read);
+
+	return -ENOSYS;
+}
+
 static const struct wdt_driver_api wdog_cmsdk_apb_api = {
 	.enable = wdog_cmsdk_apb_enable,
 	.disable = wdog_cmsdk_apb_disable,
@@ -154,6 +164,7 @@ static const struct wdt_driver_api wdog_cmsdk_apb_api = {
 	.set_config = wdog_cmsdk_apb_set_config,
 	.reload = wdog_cmsdk_apb_reload,
 	.get_reason = wdog_cmsdk_apb_get_reason,
+	.access_retained = wdog_cmsdk_apb_access_retained,
 };
 
 #ifdef CONFIG_RUNTIME_NMI

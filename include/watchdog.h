@@ -73,6 +73,9 @@ typedef void (*wdt_api_get_config)(struct device *dev,
 				   struct wdt_config *config);
 typedef void (*wdt_api_reload)(struct device *dev);
 typedef enum wdt_reboot_reason (*wdt_api_get_reason)(struct device *dev);
+typedef int (*wdt_api_access_retained)(struct device *dev,
+					u32_t *value,
+					bool read);
 
 struct wdt_driver_api {
 	wdt_api_enable enable;
@@ -81,6 +84,7 @@ struct wdt_driver_api {
 	wdt_api_set_config set_config;
 	wdt_api_reload reload;
 	wdt_api_get_reason get_reason;
+	wdt_api_access_retained access_retained;
 };
 
 static inline void wdt_enable(struct device *dev)
@@ -125,6 +129,20 @@ static inline enum wdt_reboot_reason wdt_get_reason(struct device *dev)
 	const struct wdt_driver_api *api = dev->driver_api;
 
 	return api->get_reason(dev);
+}
+
+static int wdt_get_retained(struct device *dev, u32_t *output)
+{
+	const struct wdt_driver_api *api = dev->driver_api;
+
+	return api->access_retained(dev, output, true);
+}
+
+static int wdt_set_retained(struct device *dev, u32_t value)
+{
+	const struct wdt_driver_api *api = dev->driver_api;
+
+	return api->access_retained(dev, &value, false);
 }
 
 #ifdef __cplusplus

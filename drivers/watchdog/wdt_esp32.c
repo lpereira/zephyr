@@ -237,6 +237,20 @@ static enum wdt_reboot_reason wdt_esp32_get_reason(struct device *dev)
 	}
 }
 
+static int wdt_esp32_access_retained(struct device *dev, u32_t *value,
+				     bool read)
+{
+	volatile u32_t *reg = (u32_t *)RTC_CNTL_STORE0_REG;
+
+	if (read) {
+		*value = *reg;
+	} else {
+		*reg = *value;
+	}
+
+	return 0;
+}
+
 static const struct wdt_driver_api wdt_api = {
 	.enable = wdt_esp32_enable,
 	.disable = wdt_esp32_disable,
@@ -244,6 +258,7 @@ static const struct wdt_driver_api wdt_api = {
 	.set_config = wdt_esp32_set_config,
 	.reload = wdt_esp32_reload,
 	.get_reason = wdt_esp32_get_reason,
+	.access_retained = wdt_esp32_access_retained,
 };
 
 DEVICE_AND_API_INIT(wdt_esp32, CONFIG_WDT_ESP32_DEVICE_NAME, wdt_esp32_init,

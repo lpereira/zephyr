@@ -73,6 +73,15 @@ static enum wdt_reboot_reason iwdg_stm32_get_reason(struct device *dev)
 	return WDT_REASON_UNKNOWN;
 }
 
+static int iwdg_stm32_access_retained(struct device *dev, u32_t *value, boolean read)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(value);
+	ARG_UNUSED(read);
+
+	return -ENOSYS;
+}
+
 static const struct wdt_driver_api iwdg_stm32_api = {
 	.enable = iwdg_stm32_enable,
 	.disable = iwdg_stm32_disable,
@@ -80,6 +89,7 @@ static const struct wdt_driver_api iwdg_stm32_api = {
 	.set_config = iwdg_stm32_set_config,
 	.reload = iwdg_stm32_reload,
 	.get_reason = iwdg_stm32_get_reason,
+	.access_retained = iwdg_stm32_access_retained,
 };
 
 static inline int __iwdg_stm32_prescaler(int setting)

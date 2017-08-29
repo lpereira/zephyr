@@ -106,6 +106,15 @@ static enum wdt_reboot_reason get_reason(struct device *dev)
         return WDT_REASON_UNKNOWN;
 }
 
+static int access_retained(struct device *dev, u32_t *value, boolean read)
+{
+        ARG_UNUSED(dev);
+        ARG_UNUSED(value);
+        ARG_UNUSED(read);
+
+        return -ENOSYS;
+}
+
 static const struct wdt_driver_api api = {
 	.enable = enable,
 	.disable = disable,
@@ -113,6 +122,7 @@ static const struct wdt_driver_api api = {
 	.set_config = set_config,
 	.reload = reload,
 	.get_reason = get_reason,
+	.access_retained = access_retained,
 };
 
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
