@@ -22,7 +22,7 @@ cmd_flash() {
 	fi
 
 	echo "Converting ELF to BIN"
-	${esptool} --chip esp32 elf2image ${elf_name}
+	${esptool} --chip esp32 elf2image ${elf_name} || exit 1
 
 	echo "Flashing ESP32 on ${ESP_DEVICE} (${ESP_BAUD_RATE}bps)"
 	${esptool} --chip esp32 \
@@ -35,7 +35,7 @@ cmd_flash() {
 		--flash_mode ${ESP_FLASH_MODE} \
 		--flash_freq ${ESP_FLASH_FREQ} \
 		--flash_size ${ESP_FLASH_SIZE} \
-		0x1000 ${elf_name/.elf/.bin}
+		0x1000 ${elf_name/.elf/.bin} || exit 1
 }
 
 CMD="$1"; shift
