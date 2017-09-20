@@ -17,7 +17,7 @@ include $(srctree)/arch/$(ARCH)/soc/$(SOC_PATH)/Makefile
 
 cflags-$(CONFIG_LTO) += $(call cc-option,-flto,)
 
-KBUILD_CFLAGS += $(cflags-y)
+KBUILD_CFLAGS += $(cflags-y) -mlongcalls
 KBUILD_CXXFLAGS += $(cflags-y)
 
 QEMU_CPU_TYPE_xtensa ?= unsupported
