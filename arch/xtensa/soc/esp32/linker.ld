@@ -211,6 +211,17 @@ SECTIONS
     *(.dynamic)
     *(.gnu.version_d)
     . = ALIGN(4);               /* this table MUST be 4-byte aligned */
+
+    __devconfig_start = .;
+    *(".devconfig.*")
+    KEEP(*(SORT_BY_NAME(".devconfig*")))
+    __devconfig_end = .;
+
+    __net_l2_start = .;
+    *(".net_l2.init")
+    KEEP(*(SORT_BY_NAME(".net_l2.init*")))
+    __net_l2_end = .;
+
     _rodata_end = ABSOLUTE(.);
 
     /* With flash cache enabled, this section should be aligned on 64kb due
@@ -230,7 +241,7 @@ SECTIONS
      * esptool could merge the pages, but at the moment it's unable to do
      * so, hence this workaround.
      */
-    . = ALIGN(65536);
+    /*. = ALIGN(65536);*/
   } >drom0_0_seg
 
   /* Shared RAM */
@@ -282,6 +293,6 @@ SECTIONS
   } >iram0_2_seg
 
 #include <linker/common-ram.ld>
-#include <linker/common-rom.ld>
+/*#include <linker/common-rom.ld>*/
 
 }

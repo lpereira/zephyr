@@ -18,12 +18,21 @@
 #include <toolchain/gcc.h>
 #include <zephyr/types.h>
 
+extern char _init_start[];
+extern char _bss_start[];
+extern char _bss_end[];
+
 extern void _Cstart(void);
 
-static void IRAM_SECTION reset_mmu(void)
+#define BOOT_SECTION __attribute__((section(".bootloader")))
+
+static void BOOT_SECTION reset_mmu(void)
 {
 	volatile u32_t *reg;
 
+	/* At this stage, the flash cache should be disabled.  But, just
+	 * to be sure, disable it before changing the MMU bits.
+	 */
 	esp32_rom_cache_read_disable(0);
 	esp32_rom_cache_read_disable(1);
 
@@ -42,19 +51,19 @@ static void IRAM_SECTION reset_mmu(void)
 	*reg &= ~DPORT_APP_CACHE_MMU_IA_CLR;
 }
 
-static inline int IRAM_SECTION calc_pages(void *start, void *end)
+static inline int BOOT_SECTION calc_pages(void *start, void *end)
 {
 	uintptr_t size = (uintptr_t)start - (uintptr_t)end;
 
 	return (int)ROUND_UP(size + 0xFFFF, 0x10000);
 }
 
-static inline u32_t IRAM_SECTION mask_addr(void *addr)
+static inline u32_t BOOT_SECTION mask_addr(void *addr)
 {
 	return (u32_t)((uintptr_t)addr & 0xffff0000);
 }
 
-static inline u32_t IRAM_SECTION set_up_cache_region(void *start_addr,
+static inline u32_t BOOT_SECTION set_up_cache_region(void *start_addr,
 						     void *end_addr)
 {
 	const int pages = calc_pages(start_addr, end_addr);
@@ -63,12 +72,11 @@ static inline u32_t IRAM_SECTION set_up_cache_region(void *start_addr,
 	return esp32_rom_cache_flash_mmu_set(0, 0, addr, addr, 64, pages);
 }
 
-static void IRAM_SECTION setup_mmu(void)
+static void BOOT_SECTION setup_mmu(void)
 {
 	extern char _rodata_start[], _rodata_end[];
 	extern char _irom_text_start[], _irom_text_end[];
 	volatile u32_t *flash_mmu_tbl = DPORT_PRO_FLASH_MMU_TABLE;
-	int ret;
 	int i;
 
 	for (i = 0; i < DPORT_FLASH_MMU_TABLE_SIZE; i++) {
@@ -76,20 +84,11 @@ static void IRAM_SECTION setup_mmu(void)
 	}
 
 	/* FIXME: should the return value of these be ignored?  esp-idf does. */
-	ret = set_up_cache_region(_rodata_start, _rodata_end);
-/*	if (ret) {
-		k_panic();
-	}
-*/
-
-	ret = set_up_cache_region(_irom_text_start, _irom_text_end);
-/*	if (ret) {
-		k_panic();
-	}*/
-	
+	set_up_cache_region(_rodata_start, _rodata_end);
+	set_up_cache_region(_irom_text_start, _irom_text_end);
 }
 
-static void IRAM_SECTION enable_flash_cache_cpu0(void)
+static void BOOT_SECTION enable_flash_cache_cpu0(void)
 {
 	volatile u32_t *reg;
 
@@ -103,12 +102,6 @@ static void IRAM_SECTION enable_flash_cache_cpu0(void)
 
 	reg = (u32_t *)DPORT_APP_CACHE_CTRL1_REG;
 	*reg |= DPORT_APP_CACHE_MASK_DROM0;
-
-	/* At this stage, the flash cache should be disabled.  But, just
-	 * to be sure, disable it before changing the MMU bits.
-	 */
-	esp32_rom_cache_read_disable(0);
-	esp32_rom_cache_flush(0);
 
 	setup_mmu();
 
@@ -130,31 +123,23 @@ static void IRAM_SECTION enable_flash_cache_cpu0(void)
 	esp32_rom_cache_read_enable(0);
 }
 
-/* We have some things set up from the first stage boot loader inside the ESP32
- * mask ROM.  So write this in C rather than assembly.
- */
-void IRAM_SECTION __start(void)
+static void BOOT_SECTION copy_kernel_to_iram(void)
+{
+	
+}
+
+void BOOT_SECTION __some_boot_func(void)
 {
 	volatile u32_t *wdt_rtc_reg = (u32_t *)RTC_CNTL_WDTCONFIG0_REG;
 	volatile u32_t *wdt_timg_reg = (u32_t *)TIMG_WDTCONFIG0_REG(0);
 	volatile u32_t *app_cpu_config_reg = (u32_t *)DPORT_APPCPU_CTRL_B_REG;
-	extern u32_t _init_start;
-	extern u32_t _bss_start;
-	extern u32_t _bss_end;
+	void *(*esp32_rom_memset)(void *s, int c, size_t n) = (void *)0x4000c44c;
 
-	/* Move the exception vector table to IRAM. */
-	__asm__ __volatile__ (
-		"wsr %0, vecbase"
-		:
-		: "r"(&_init_start));
+	/* Use memset() from ROM as we don't have ours this early. */
+	esp32_rom_memset(_bss_start, 0, _bss_end - _bss_start);
 
-	/* Zero out BSS.  Clobber _bss_start to avoid memset() elision. */
-	memset(&_bss_start, 0, (&_bss_end - &_bss_start) * sizeof(_bss_start));
-	__asm__ __volatile__ (
-		""
-		:
-		: "g"(&_bss_start)
-		: "memory");
+	/* Disable CPU1 while we figure out how to have SMP in Zephyr. */
+	*app_cpu_config_reg &= ~DPORT_APPCPU_CLKGATE_EN;
 
 	/* The watchdog timer is enabled in the bootloader.  We're done booting,
 	 * so disable it.
@@ -162,17 +147,37 @@ void IRAM_SECTION __start(void)
 	*wdt_rtc_reg &= ~RTC_CNTL_WDT_FLASHBOOT_MOD_EN;
 	*wdt_timg_reg &= ~TIMG_WDT_FLASHBOOT_MOD_EN;
 
+	/* Set up flash cache for PRO CPU. */
+	enable_flash_cache_cpu0();
+
+	copy_kernel_to_iram();
+}
+
+/* We have some things set up from the first stage boot loader inside the ESP32
+ * mask ROM.  So write this in C rather than assembly.
+ */
+void IRAM_SECTION __start(void)
+{
+	__some_boot_func();
+	/* Move the exception vector table to IRAM. */
+	__asm__ __volatile__ (
+		"wsr %0, vecbase"
+		:
+		: "r"(_init_start));
+
+	/* Zero out BSS.  Clobber _bss_start to avoid memset() elision. */
+	memset(_bss_start, 0, _bss_end - _bss_start);
+	__asm__ __volatile__ (
+		""
+		:
+		: "g"(_bss_start)
+		: "memory");
+
 	/* Disable normal interrupts. */
 	__asm__ __volatile__ (
 		"wsr %0, PS"
 		:
 		: "r"(PS_INTLEVEL(XCHAL_EXCM_LEVEL) | PS_UM | PS_WOE));
-
-	/* Disable CPU1 while we figure out how to have SMP in Zephyr. */
-	*app_cpu_config_reg &= ~DPORT_APPCPU_CLKGATE_EN;
-
-	/* Set up flash cache for PRO CPU. */
-	enable_flash_cache_cpu0();
 
 	/* Start Zephyr */
 	_Cstart();
