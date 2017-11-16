@@ -9,8 +9,9 @@
 #define SPI_ESP32_SPIN_THRESHOLD 10
 #define SPI_ESP32_DATA_BUFFER_LEN 64
 
-struct spi_esp32_data {
+struct spi_esp32_config {
 	int index;
+	void (*configure_irq)(struct device *device);
 };
 
 struct spi_esp32_peripheral {
@@ -108,7 +109,7 @@ static void spi_esp32_configure_pins(int index)
 	pinmux_pin_input_enable(pins->cs, PINMUX_OUTPUT_ENABLED);
 	pinmux_pin_set(pins->cs, PINMUX_FUNC_B);
 	esp32_rom_gpio_matrix_out(pins->cs, false, false);
-	sys_clr_bit(SPI_PIN_REG(index), pins->cs_disable_bit);
+	sys_clear_bit(SPI_PIN_REG(index), pins->cs_disable_bit);
 }
 
 static void spi_esp32_enable_peripheral(int index)
@@ -120,7 +121,7 @@ static void spi_esp32_enable_peripheral(int index)
 	};
 
 	sys_set_bit(DPORT_PERIP_CLK_EN_REG, periph_tbl[index].clk);
-	sys_clr_bit(DPORT_PERIP_RST_EN_REG, periph_tbl[index].rst);
+	sys_clear_bit(DPORT_PERIP_RST_EN_REG, periph_tbl[index].rst);
 }
 
 static int spi_esp32_calculate_div_prediv(int frequency, int *div, int *prediv)
@@ -139,6 +140,12 @@ static int spi_esp32_calculate_div_prediv(int frequency, int *div, int *prediv)
 	 * pre-divisor so that the frequency is as close as possible to the
 	 * desired value.  It should be exact if frequency is a multiple of
 	 * f_apb; otherwise, it'll try to approximate as much as possible.
+	 *
+	 * The search isn't exhaustive.  For instance, a better
+	 * approximation could be made by iterating over possible all
+	 * possible pre-divisor values instead of only the divisor values,
+	 * as it's a larger range, but this would be more expensive.
+	 *
 	 * It will return -EINVAL if it couldn't find a pair of values that
 	 * fits.
 	 */
@@ -152,8 +159,14 @@ static int spi_esp32_calculate_div_prediv(int frequency, int *div, int *prediv)
 		int cur_prediv, cur_freq, diff;
 
 		cur_prediv = (apb_over_freq / (cur_div - 1)) - 1;
-		if (cur_prediv < 0 || cur_prediv > SPI_CLKDIV_PRE) {
-			/* Pre-divisor out of range, don't bother. */
+		if (cur_prediv < 0) {
+			/* If cur_prediv reaches -1, don't bother trying
+			 * other values for the pre-divisor: all remaining
+			 * values will be negative.
+			 */
+			break;
+		}
+		if (cur_prediv > SPI_CLKDIV_PRE) {
 			continue;
 		}
 
@@ -212,7 +225,7 @@ static int spi_esp32_configure_frequency(const struct spi_config *config)
 				(div << SPI_CLKCNT_N_S);
 
 		/* H is set for a 50% duty cicle using the formula suggested
-		 * in the TRM.
+		 * in the TRM.  FIXME: make this a device-specific setting?
 		 */
 		clock_reg_val |= (((div + 1) / 2 - 1) << SPI_CLKCNT_H_S);
 
@@ -232,6 +245,7 @@ static int spi_esp32_configure_frequency(const struct spi_config *config)
 
 static int spi_esp32_configure(struct spi_config *spi_config)
 {
+	struct spi_esp32_data *data = spi_config->dev->driver_data;
 	const struct spi_esp32_config *config =
 		spi_config->dev->config->config_info;
 	/* Compact representation for tables found in the ESP32 TRM, chapter
@@ -247,7 +261,14 @@ static int spi_esp32_configure(struct spi_config *spi_config)
 	int mode;
 	int ret;
 
-	/* FIXME: do nothing if already configured */
+	if (spi_context_configured(data->ctx, spi_config)) {
+		return 0;
+	}
+
+	if (spi_config->cs) {
+		/* ESP32 SPI peripheral controls the chip select itself. */
+		return -EINVAL;
+	}
 
 	spi_esp32_enable_peripheral(config->index);
 
@@ -259,14 +280,14 @@ static int spi_esp32_configure(struct spi_config *spi_config)
 	mode = spi_esp32_operation_to_mode(config->operation);
 
 	if (SPI_OP_MODE_GET(config->operation) == SPI_OP_MODE_MASTER) {
-		sys_clr_bit(SPI_SLAVE_REG(config->index), SPI_SLAVE_MODE_S);
+		sys_clear_bit(SPI_SLAVE_REG(config->index), SPI_SLAVE_MODE_S);
 
 		if (clock_in_out_tbl & BIT(mode)) {
 			sys_set_bit(SPI_USER_REG(config->index),
 				    SPI_CK_OUT_EDGE_S);
 		} else {
-			sys_clr_bit(SPI_USER_REG(config->index),
-				    SPI_CK_OUT_EDGE_S);
+			sys_clear_bit(SPI_USER_REG(config->index),
+				      SPI_CK_OUT_EDGE_S);
 		}
 
 		miso_delay_mode = mosi_miso_delay_mode_tbl[mode];
@@ -280,8 +301,8 @@ static int spi_esp32_configure(struct spi_config *spi_config)
 			sys_set_bit(SPI_USER_REG(config->index),
 				    SPI_CK_I_EDGE_S);
 		} else {
-			sys_clr_bit(SPI_USER_REG(config->index),
-				    SPI_CK_I_EDGE_S);
+			sys_clear_bit(SPI_USER_REG(config->index),
+				      SPI_CK_I_EDGE_S);
 		}
 
 		miso_delay_mode = 0;
@@ -301,7 +322,7 @@ static int spi_esp32_configure(struct spi_config *spi_config)
 	if (clock_idle_edge_tbl & BIT(mode)) {
 		sys_set_bit(SPI_PIN_REG(config->index), SPI_CK_IDLE_EDGE_S);
 	} else {
-		sys_clr_bit(SPI_PIN_REG(config->index), SPI_CK_IDLE_EDGE_S);
+		sys_clear_bit(SPI_PIN_REG(config->index), SPI_CK_IDLE_EDGE_S);
 	}
 
 	if (config->operation & SPI_TRANSFER_LSB) {
@@ -310,10 +331,10 @@ static int spi_esp32_configure(struct spi_config *spi_config)
 		sys_set_bit(SPI_CTRL_REG(config->index),
 			    SPI_RD_BIT_ORDER_S);
 	} else {
-		sys_clr_bit(SPI_CTRL_REG(config->index),
-			    SPI_WR_BIT_ORDER_S);
-		sys_clr_bit(SPI_CTRL_REG(config->index),
-			    SPI_RD_BIT_ORDER_S);
+		sys_clear_bit(SPI_CTRL_REG(config->index),
+			      SPI_WR_BIT_ORDER_S);
+		sys_clear_bit(SPI_CTRL_REG(config->index),
+			      SPI_RD_BIT_ORDER_S);
 	}
 
 	spi_esp32_configure_pins(config->index);
@@ -342,27 +363,29 @@ static size_t spi_esp32_calc_len(const struct spi_buf *bufs, size_t n_bufs)
 	return size;
 }
 
-static int spi_esp32_transceive(struct spi_config *spi_config,
+static int spi_esp32_transceive(struct spi_config *config,
 				const struct spi_buf *tx_bufs,
 				size_t tx_count,
 				struct spi_buf *rx_bufs,
 				size_t rx_count)
 {
-	const struct spi_esp32_config *config =
-		spi_config->dev->config->config_info;
+	const struct spi_esp32_config *info = config->dev->config->config_info;
+	struct spi_esp32_data *spi = config->dev->driver_data;
 	struct spi_esp32_buffer_split *buffer_split;
 	size_t tx_len = spi_esp32_calc_len(tx_bufs, tx_count);
 	size_t rx_len = spi_esp32_calc_len(rx_bufs, rx_count);
 	size_t len;
 	int ret;
 
+	/* FIXME: is device busy? can we test that? */
 	spi_context_lock(&spi->ctx, false, NULL);
 
-	/* FIXME: do not configure again if not needed */
-	ret = spi_esp32_configure(config);
+	ret = spi_esp32_configure(info, spi, config);
 	if (ret < 0) {
 		goto out;
 	}
+
+	/* spi_context_buffers_setup()? */
 
 	if ((rx_len + tx_len) > 64) {
 		/* GP-SPI transfers are limited to a 64-byte buffer. */
@@ -393,10 +416,10 @@ static int spi_esp32_transceive(struct spi_config *spi_config,
 	 */
 	if (rx_len) {
 		sys_set_bit(SPI_USER_REG(config->index),
-			    1 << SPI_MOSI_HIGHPART_S);
+			    SPI_MOSI_HIGHPART_S);
 	} else {
 		sys_clear_bit(SPI_USER_REG(config->index),
-			      1 << SPI_MOSI_HIGHPART_S);
+			      SPI_MOSI_HIGHPART_S);
 	}
 
 	if (tx_len) {
@@ -404,7 +427,7 @@ static int spi_esp32_transceive(struct spi_config *spi_config,
 		size_t i;
 
 		sys_set_bit(SPI_USER_REG(config->index),
-			    1 << SPI_MISO_HIGHPART_S);
+			    SPI_MISO_HIGHPART_S);
 
 		if (rx_len) {
 			buf = (u8_t *)SPI_W8_REG(config->index);
@@ -418,7 +441,7 @@ static int spi_esp32_transceive(struct spi_config *spi_config,
 		}
 	} else {
 		sys_clear_bit(SPI_USER_REG(config->index),
-			      1 << SPI_MISO_HIGHPART_S);
+			      SPI_MISO_HIGHPART_S);
 	}
 
 	sys_set_bit(SPI_USER_REG(config->index), SPI_USR_COMMAND_M);
@@ -426,26 +449,24 @@ static int spi_esp32_transceive(struct spi_config *spi_config,
 	if (SPI_OP_MODE_GET(config->operation) == SPI_OP_MODE_MASTER) {
 		int spins = 0;
 
-		ret = 0;
-
 		/* Interrupts for master mode are only available if
-		 * transfers are performed using DMA; thus this busy
-		 * loop here.
+		 * transfers are performed using DMA.
 		 */
-
 		while (true) {
-			u32_t reg = sys_read32(SPI_USER_REG(config->index);
-
-			if (reg & SPI_USR_COMMAND_M) {
+			if (!sys_test_bit(SPI_USER_REG(config->index),
+					  SPI_USR_COMMAND_S)) {
 				break;
 			}
 
-			spins++;
 			if (spins > SPI_ESP32_SPIN_THRESHOLD) {
 				spins = 0;
 				k_yield();
 			}
+
+			spins++;
 		}
+
+		ret = 0;
 	} else {
 		ret = spi_context_wait_for_completion(&spi->ctx);
 	}
@@ -474,6 +495,16 @@ out:
 
 static int spi_esp32_release(struct spi_config *config)
 {
+	const struct spi_esp32_config *info = config->dev->config->config_info;
+	struct spi_esp32_data *spi = config->dev->driver_data;
+
+	if (!spi_context_configured(&spi->ctx, config)) {
+		return -EBUSY;
+	}
+
+	spi_context_unlock_unconditionally(&spi->ctx);
+
+	return 0;
 }
 
 static const struct spi_driver_api {
@@ -483,63 +514,84 @@ static const struct spi_driver_api {
 
 static int spi_esp32_init(struct device *device)
 {
-	const struct spi_esp32_config *config = dev->config->config_info;
+	const struct spi_esp32_config *info = dev->config->config_info;
+	struct spi_esp32_data *spi = dev->driver_data;
 
-	config->init_cb(device);
+	info->configure_irq();
+
+	spi_context_unlock_unconditionally(&spi->ctx);
 
 	return 0;
 }
 
+/* Although ESP32 has 4 SPI devices, only 3 are exposed.  The reason is that
+ * the internal flash device is connected directly to the SPI0 device.
+ */
 #ifdef CONFIG_SPI_0
-static void spi_esp32_init_0(const struct spi_esp32_config *config)
+static void spi_esp32_config_irq_0(const struct spi_esp32_config *config)
 {
 	IRQ_CONNECT(CONFIG_SPI_0_IRQ, CONFIG_SPI_0_IRQ_PRI,
 		    spi_esp32_isr, 0, 0);
 	irq_disable(CONFIG_SPI_0_IRQ);
 }
 
-static const struct spi_esp32_config spi_esp32_0_config {
-	.index = 0,
-	.init_cb = spi_esp32_init_0
+static struct struct spi_esp32_data spi_esp32_0_data {
+	SPI_CONTEXT_INIT_LOCK(spi_esp32_0_data, ctx),
+	SPI_CONTEXT_INIT_SYNC(spi_esp32_0_data, ctx),
 };
 
-DEVICE_DEFINE(spi_dev_0, CONFIG_SPI_0_NAME, spi_esp32_init, NULL,
-	      NULL, &spi_esp32_0_config, POST_KERNEL,
-	      CONFIG_SPI_INIT_PRIORITY, NULL);
+static const struct spi_esp32_config spi_esp32_0_config {
+	.index = 0,
+	.configure_irq = spi_esp32_config_irq_0
+};
+
+DEVICE_DEFINE(spi_dev_0, CONFIG_SPI_0_NAME, spi_esp32_init,
+	      &spi_esp32_0_data, NULL, &spi_esp32_0_config,
+	      POST_KERNEL, CONFIG_SPI_INIT_PRIORITY, NULL);
 #endif
 
 #ifdef CONFIG_SPI_1
-static void spi_esp32_init_0(const struct spi_esp32_config *config)
+static void spi_esp32_config_irq_0(const struct spi_esp32_config *config)
 {
 	IRQ_CONNECT(CONFIG_SPI_1_IRQ, CONFIG_SPI_0_IRQ_PRI,
 		    spi_esp32_isr, 0, 0);
 	irq_disable(CONFIG_SPI_1_IRQ);
 }
 
-static const struct spi_esp32_config spi_esp32_1_config {
-	.index = 1,
-	.init_cb = spi_esp32_init_1
+static struct struct spi_esp32_data spi_esp32_1_data {
+	SPI_CONTEXT_INIT_LOCK(spi_esp32_1_data, ctx),
+	SPI_CONTEXT_INIT_SYNC(spi_esp32_1_data, ctx),
 };
 
-DEVICE_DEFINE(spi_dev_1, CONFIG_SPI_1_NAME, spi_esp32_init, NULL,
-	      NULL, &spi_esp32_1_config, POST_KERNEL,
-	      CONFIG_SPI_INIT_PRIORITY, NULL);
+static const struct spi_esp32_config spi_esp32_1_config {
+	.index = 1,
+	.configure_irq = spi_esp32_config_irq_1
+};
+
+DEVICE_DEFINE(spi_dev_1, CONFIG_SPI_1_NAME, spi_esp32_init,
+	      &spi_esp32_1_data, NULL, &spi_esp32_1_config,
+	      POST_KERNEL, CONFIG_SPI_INIT_PRIORITY, NULL);
 #endif
 
 #ifdef CONFIG_SPI_2
-static void spi_esp32_init_2(const struct spi_esp32_config *config)
+static void spi_esp32__2(const struct spi_esp32_config *config)
 {
 	IRQ_CONNECT(CONFIG_SPI_2_IRQ, CONFIG_SPI_0_IRQ_PRI,
 		    spi_esp32_isr, 0, 0);
 	irq_disable(CONFIG_SPI_2_IRQ);
 }
 
-static const struct spi_esp32_config spi_esp32_2_config {
-	.index = 2,
-	.init_cb = spi_esp32_init_2
+static struct struct spi_esp32_data spi_esp32_2_data {
+	SPI_CONTEXT_INIT_LOCK(spi_esp32_2_data, ctx),
+	SPI_CONTEXT_INIT_SYNC(spi_esp32_2_data, ctx),
 };
 
-DEVICE_DEFINE(spi_dev_2, CONFIG_SPI_2_NAME, spi_esp32_init, NULL,
-	      NULL, &spi_esp32_2_config, POST_KERNEL,
-	      CONFIG_SPI_INIT_PRIORITY, NULL);
+static const struct spi_esp32_config spi_esp32_2_config {
+	.index = 2,
+	.configure_irq = spi_esp32_config_irq_2
+};
+
+DEVICE_DEFINE(spi_dev_2, CONFIG_SPI_2_NAME, spi_esp32_init,
+	      &spi_esp32_2_data, NULL, &spi_esp32_2_config,
+	      POST_KERNEL, CONFIG_SPI_INIT_PRIORITY, NULL);
 #endif
