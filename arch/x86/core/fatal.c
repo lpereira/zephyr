@@ -25,6 +25,40 @@
 __weak void _debug_fatal_hook(const NANO_ESF *esf) { ARG_UNUSED(esf); }
 
 
+#if defined(CONFIG_PRINTK) && !defined(CONFIG_OMIT_FRAME_POINTER)
+static void unwind_stack(uintptr_t base_ptr)
+{
+	struct stack_frame {
+		struct stack_frame *next;
+		uintptr_t ret_addr;
+		uintptr_t args;
+	};
+	struct stack_frame *frame = (struct stack_frame *)base_ptr;
+	int i;
+
+	printk("Stack trace: ");
+
+	if (!frame) {
+		printk("NULL frame ptr\n");
+		return;
+	}
+	if (base_ptr % sizeof(base_ptr) != 0) {
+		printk("unaligned frame ptr\n");
+		return;
+	}
+
+	for (i = 0; i < 8; i++) {
+		if (!frame || !frame->ret_addr) {
+			break;
+		}
+
+		printk("{<-0x%x (0x%x)} ", frame->ret_addr, frame->args);
+		frame = frame->next;
+	}
+	printk("\n");
+}
+#endif /* CONFIG_PRINTK && !CONFIG_OMIT_FRAME_POINTER */
+
 /**
  *
  * @brief Kernel fatal error handler
@@ -99,6 +133,11 @@ FUNC_NORETURN void _NanoFatalErrorHandler(unsigned int reason,
 	       pEsf->eax, pEsf->ebx, pEsf->ecx, pEsf->edx,
 	       pEsf->esi, pEsf->edi, pEsf->ebp, pEsf->esp,
 	       pEsf->eflags);
+
+#if !defined(CONFIG_OMIT_FRAME_POINTER)
+	unwind_stack(pEsf->ebp);
+#endif /* CONFIG_OMIT_FRAME_POINTER */
+
 #endif /* CONFIG_PRINTK */
 
 
