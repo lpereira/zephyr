@@ -11,8 +11,8 @@
 #include <syscall_handler.h>
 #include <kswap.h>
 
-extern struct k_timer _k_timer_list_start[];
-extern struct k_timer _k_timer_list_end[];
+extern struct k_timer z_k_timer_list_start[];
+extern struct k_timer z_k_timer_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -23,13 +23,15 @@ struct k_timer *z_k_trace_list_k_timer;
  */
 static int init_timer_module(struct device *dev)
 {
-	ARG_UNUSED(dev);
-
 	struct k_timer *timer;
 
-	for (timer = _k_timer_list_start; timer < _k_timer_list_end; timer++) {
+	for (timer = z_k_timer_list_start;
+	     timer < z_k_timer_list_end; timer++) {
 		SYS_TRACING_OBJ_INIT(k_timer, timer);
 	}
+
+	ARG_UNUSED(dev);
+
 	return 0;
 }
 

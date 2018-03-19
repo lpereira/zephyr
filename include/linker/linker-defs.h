@@ -52,13 +52,13 @@
  */
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
 #define DEVICE_COUNT \
-	((__device_init_end - __device_init_start) / _DEVICE_STRUCT_SIZE)
+	((z_k_device_init_end - z_k_device_init_start) / _DEVICE_STRUCT_SIZE)
 #define DEV_BUSY_SZ	(((DEVICE_COUNT + 31) / 32) * 4)
 #define DEVICE_BUSY_BITFIELD()			\
 		FILL(0x00) ;			\
-		__device_busy_start = .;	\
+		z_k_device_busy_start = .;	\
 		. = . + DEV_BUSY_SZ;		\
-		__device_busy_end = .;
+		z_k_device_busy_end = .;
 #else
 #define DEVICE_BUSY_BITFIELD()
 #endif
@@ -70,7 +70,7 @@
  */
 
 #define DEVICE_INIT_LEVEL(level)				\
-		__device_##level##_start = .;			\
+		z_k_device_##level##_start = .;			\
 		KEEP(*(SORT(.init_##level[0-9])));		\
 		KEEP(*(SORT(.init_##level[1-9][0-9])));	\
 
@@ -81,12 +81,12 @@
  */
 
 #define	DEVICE_INIT_SECTIONS()			\
-		__device_init_start = .;	\
+		z_k_device_init_start = .;	\
 		DEVICE_INIT_LEVEL(PRE_KERNEL_1)	\
 		DEVICE_INIT_LEVEL(PRE_KERNEL_2)	\
 		DEVICE_INIT_LEVEL(POST_KERNEL)	\
 		DEVICE_INIT_LEVEL(APPLICATION)	\
-		__device_init_end = .;		\
+		z_k_device_init_end = .;	\
 		DEVICE_BUSY_BITFIELD()		\
 
 

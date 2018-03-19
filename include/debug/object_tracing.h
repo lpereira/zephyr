@@ -15,18 +15,18 @@
 #ifdef CONFIG_OBJECT_TRACING
 
 #include <kernel.h>
-extern struct k_timer    *_trace_list_k_timer;
-extern struct k_mem_slab *_trace_list_k_mem_slab;
-extern struct k_mem_pool *_trace_list_k_mem_pool;
-extern struct k_sem      *_trace_list_k_sem;
-extern struct k_mutex    *_trace_list_k_mutex;
-extern struct k_alert    *_trace_list_k_alert;
-extern struct k_fifo     *_trace_list_k_fifo;
-extern struct k_lifo     *_trace_list_k_lifo;
-extern struct k_stack    *_trace_list_k_stack;
-extern struct k_msgq     *_trace_list_k_msgq;
-extern struct k_mbox     *_trace_list_k_mbox;
-extern struct k_pipe     *_trace_list_k_pipe;
+extern struct k_timer    *z_k_trace_list_k_timer;
+extern struct k_mem_slab *z_k_trace_list_k_mem_slab;
+extern struct k_mem_pool *z_k_trace_list_k_mem_pool;
+extern struct k_sem      *z_k_trace_list_k_sem;
+extern struct k_mutex    *z_k_trace_list_k_mutex;
+extern struct k_alert    *z_k_trace_list_k_alert;
+extern struct k_fifo     *z_k_trace_list_k_fifo;
+extern struct k_lifo     *z_k_trace_list_k_lifo;
+extern struct k_stack    *z_k_trace_list_k_stack;
+extern struct k_msgq     *z_k_trace_list_k_msgq;
+extern struct k_mbox     *z_k_trace_list_k_mbox;
+extern struct k_pipe     *z_k_trace_list_k_pipe;
 
 /**
  * @def SYS_TRACING_HEAD
@@ -38,7 +38,7 @@ extern struct k_pipe     *_trace_list_k_pipe;
  * @param type Data type of the trace list to get the head from.
  * @param name Name of the trace list to get the head from.
  */
-#define SYS_TRACING_HEAD(type, name) ((type *) _CONCAT(_trace_list_, name))
+#define SYS_TRACING_HEAD(type, name) ((type *) _CONCAT(z_k_trace_list_, name))
 
 /**
  * @def SYS_TRACING_NEXT

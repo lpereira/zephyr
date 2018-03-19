@@ -15,8 +15,8 @@
 #include <init.h>
 #include <kswap.h>
 
-extern struct k_mem_slab _k_mem_slab_list_start[];
-extern struct k_mem_slab _k_mem_slab_list_end[];
+extern struct k_mem_slab z_k_mem_slab_list_start[];
+extern struct k_mem_slab z_k_mem_slab_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 struct k_mem_slab *z_k_trace_list_k_mem_slab;
@@ -58,8 +58,8 @@ static int init_mem_slab_module(struct device *dev)
 
 	struct k_mem_slab *slab;
 
-	for (slab = _k_mem_slab_list_start;
-	     slab < _k_mem_slab_list_end;
+	for (slab = z_k_mem_slab_list_start;
+	     slab < z_k_mem_slab_list_end;
 	     slab++) {
 		create_free_list(slab);
 		SYS_TRACING_OBJ_INIT(k_mem_slab, slab);

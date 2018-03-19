@@ -17,9 +17,9 @@
 
 	SECTION_DATA_PROLOGUE(_static_thread_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_static_thread_data_list_start = .;
+		z_k_static_thread_data_list_start = .;
 		KEEP(*(SORT_BY_NAME("._static_thread_data.static.*")))
-		_static_thread_data_list_end = .;
+		z_k_static_thread_data_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 #ifdef CONFIG_USERSPACE
@@ -30,111 +30,111 @@
 	 * These two symbols only used by gen_kobject_list.py
 	 */
 
-	_static_kernel_objects_begin = .;
+	z_k_static_kernel_objects_begin = .;
 #endif /* CONFIG_USERSPACE */
 
 	SECTION_DATA_PROLOGUE(_k_timer_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_timer_list_start = .;
+		z_k_timer_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_timer.static.*")))
-		_k_timer_list_end = .;
+		z_k_timer_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_mem_slab_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_mem_slab_list_start = .;
+		z_k_mem_slab_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_mem_slab.static.*")))
-		_k_mem_slab_list_end = .;
+		z_k_mem_slab_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_mem_pool_area, (OPTIONAL), SUBALIGN(4))
 	{
 		KEEP(*(SORT_BY_NAME("._k_memory_pool.struct*")))
-		_k_mem_pool_list_start = .;
+		z_k_mem_pool_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_mem_pool.static.*")))
-		_k_mem_pool_list_end = .;
+		z_k_mem_pool_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_sem_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_sem_list_start = .;
+		z_k_sem_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_sem.static.*")))
-		_k_sem_list_end = .;
+		z_k_sem_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_mutex_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_mutex_list_start = .;
+		z_k_mutex_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_mutex.static.*")))
-		_k_mutex_list_end = .;
+		z_k_mutex_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_alert_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_alert_list_start = .;
+		z_k_alert_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_alert.static.*")))
-		_k_alert_list_end = .;
+		z_k_alert_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_queue_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_queue_list_start = .;
+		z_k_queue_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_queue.static.*")))
-		_k_queue_list_end = .;
+		z_k_queue_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_stack_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_stack_list_start = .;
+		z_k_stack_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_stack.static.*")))
-		_k_stack_list_end = .;
+		z_k_stack_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_msgq_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_msgq_list_start = .;
+		z_k_msgq_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_msgq.static.*")))
-		_k_msgq_list_end = .;
+		z_k_msgq_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_mbox_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_mbox_list_start = .;
+		z_k_mbox_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_mbox.static.*")))
-		_k_mbox_list_end = .;
+		z_k_mbox_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_pipe_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_pipe_list_start = .;
+		z_k_pipe_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_pipe.static.*")))
-		_k_pipe_list_end = .;
+		z_k_pipe_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_work_area, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_work_list_start = .;
+		z_k_work_list_start = .;
 		KEEP(*(SORT_BY_NAME("._k_work.static.*")))
-		_k_work_list_end = .;
+		z_k_work_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_task_list, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_task_list_start = .;
+		z_k_task_list_start = .;
 		*(._k_task_list.public.*)
 		*(._k_task_list.private.*)
-		_k_task_list_idle_start = .;
+		z_k_task_list_idle_start = .;
 		*(._k_task_list.idle.*)
 		KEEP(*(SORT_BY_NAME("._k_task_list*")))
-		_k_task_list_end = .;
+		z_k_task_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_event_list, (OPTIONAL), SUBALIGN(4))
 	{
-		_k_event_list_start = .;
+		z_k_event_list_start = .;
 		*(._k_event_list.event.*)
 		KEEP(*(SORT_BY_NAME("._k_event_list*")))
-		_k_event_list_end = .;
+		z_k_event_list_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_k_memory_pool, (OPTIONAL), SUBALIGN(4))
@@ -142,10 +142,10 @@
 		*(._k_memory_pool.struct*)
 		KEEP(*(SORT_BY_NAME("._k_memory_pool.struct*")))
 
-		_k_mem_pool_start = .;
+		z_k_mem_pool_start = .;
 		*(._k_memory_pool.*)
 		KEEP(*(SORT_BY_NAME("._k_memory_pool*")))
-		_k_mem_pool_end = .;
+		z_k_mem_pool_end = .;
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 	SECTION_DATA_PROLOGUE(_net_buf_pool_area, (OPTIONAL), SUBALIGN(4))
@@ -189,5 +189,5 @@
 	} GROUP_DATA_LINK_IN(RAMABLE_REGION, ROMABLE_REGION)
 
 #ifdef CONFIG_USERSPACE
-	_static_kernel_objects_end = .;
+	z_k_static_kernel_objects_end = .;
 #endif

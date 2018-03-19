@@ -13,19 +13,19 @@
 #include <kswap.h>
 
 /* Linker-defined symbols bound the static pool structs */
-extern struct k_mem_pool _k_mem_pool_list_start[];
-extern struct k_mem_pool _k_mem_pool_list_end[];
+extern struct k_mem_pool z_k_mem_pool_list_start[];
+extern struct k_mem_pool z_k_mem_pool_list_end[];
 
 s64_t _tick_get(void);
 
 static struct k_mem_pool *get_pool(int id)
 {
-	return &_k_mem_pool_list_start[id];
+	return &z_k_mem_pool_list_start[id];
 }
 
 static int pool_id(struct k_mem_pool *pool)
 {
-	return pool - &_k_mem_pool_list_start[0];
+	return pool - &z_k_mem_pool_list_start[0];
 }
 
 static void *block_ptr(struct k_mem_pool *p, size_t lsz, int block)
@@ -129,7 +129,7 @@ int init_static_pools(struct device *unused)
 	ARG_UNUSED(unused);
 	struct k_mem_pool *p;
 
-	for (p = _k_mem_pool_list_start; p < _k_mem_pool_list_end; p++) {
+	for (p = z_k_mem_pool_list_start; p < z_k_mem_pool_list_end; p++) {
 		init_mem_pool(p);
 	}
 

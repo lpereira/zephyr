@@ -27,8 +27,8 @@
 #include <kernel_internal.h>
 #include <kswap.h>
 
-extern struct _static_thread_data _static_thread_data_list_start[];
-extern struct _static_thread_data _static_thread_data_list_end[];
+extern struct _static_thread_data z_k_static_thread_data_list_start[];
+extern struct _static_thread_data z_k_static_thread_data_list_end[];
 
 #define _FOREACH_STATIC_THREAD(thread_data)              \
 	for (struct _static_thread_data *thread_data =   \
@@ -506,15 +506,15 @@ void _k_thread_single_abort(struct k_thread *thread)
 
 #ifdef CONFIG_MULTITHREADING
 #ifdef CONFIG_USERSPACE
-extern char __object_access_start[];
-extern char __object_access_end[];
+extern char z_k_object_access_start[];
+extern char z_k_object_access_end[];
 
 static void grant_static_access(void)
 {
 	struct _k_object_assignment *pos;
 
-	for (pos = (struct _k_object_assignment *)__object_access_start;
-	     pos < (struct _k_object_assignment *)__object_access_end;
+	for (pos = (struct _k_object_assignment *) z_k_object_access_start;
+	     pos < (struct _k_object_assignment *) z_k_object_access_end;
 	     pos++) {
 		for (int i = 0; pos->objects[i] != NULL; i++) {
 			k_object_access_grant(pos->objects[i],

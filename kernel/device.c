@@ -10,26 +10,26 @@
 #include <misc/util.h>
 #include <atomic.h>
 
-extern struct device __device_init_start[];
-extern struct device __device_PRE_KERNEL_1_start[];
-extern struct device __device_PRE_KERNEL_2_start[];
-extern struct device __device_POST_KERNEL_start[];
-extern struct device __device_APPLICATION_start[];
-extern struct device __device_init_end[];
+extern struct device z_k_device_init_start[];
+extern struct device z_k_device_PRE_KERNEL_1_start[];
+extern struct device z_k_device_PRE_KERNEL_2_start[];
+extern struct device z_k_device_POST_KERNEL_start[];
+extern struct device z_k_device_APPLICATION_start[];
+extern struct device z_k_device_init_end[];
 
 static struct device *config_levels[] = {
-	__device_PRE_KERNEL_1_start,
-	__device_PRE_KERNEL_2_start,
-	__device_POST_KERNEL_start,
-	__device_APPLICATION_start,
+	z_k_device_PRE_KERNEL_1_start,
+	z_k_device_PRE_KERNEL_2_start,
+	z_k_device_POST_KERNEL_start,
+	z_k_device_APPLICATION_start,
 	/* End marker */
-	__device_init_end,
+	z_k_device_init_end,
 };
 
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
-extern u32_t __device_busy_start[];
-extern u32_t __device_busy_end[];
-#define DEVICE_BUSY_SIZE (__device_busy_end - __device_busy_start)
+extern u32_t z_k_device_busy_start[];
+extern u32_t z_k_device_busy_end[];
+#define DEVICE_BUSY_SIZE (z_k_device_busy_end - z_k_device_busy_start)
 #endif
 
 /**
@@ -65,13 +65,15 @@ struct device *device_get_binding(const char *name)
 	 * with CONFIG_* macros), only cheap pointer comparisons will be
 	 * performed.  Reserve string comparisons for a fallback.
 	 */
-	for (info = __device_init_start; info != __device_init_end; info++) {
+	for (info = z_k_device_init_start;
+	     info != z_k_device_init_end; info++) {
 		if (info->driver_api != NULL && info->config->name == name) {
 			return info;
 		}
 	}
 
-	for (info = __device_init_start; info != __device_init_end; info++) {
+	for (info = z_k_device_init_start;
+	     info != z_k_device_init_end; info++) {
 		if (!info->driver_api) {
 			continue;
 		}
@@ -94,8 +96,8 @@ int device_pm_control_nop(struct device *unused_device,
 void device_list_get(struct device **device_list, int *device_count)
 {
 
-	*device_list = __device_init_start;
-	*device_count = __device_init_end - __device_init_start;
+	*device_list = z_k_device_init_start;
+	*device_count = z_k_device_init_end - z_k_device_init_start;
 }
 
 
@@ -113,8 +115,8 @@ int device_any_busy_check(void)
 
 int device_busy_check(struct device *chk_dev)
 {
-	if (atomic_test_bit((const atomic_t *)__device_busy_start,
-				 (chk_dev - __device_init_start))) {
+	if (atomic_test_bit((const atomic_t *) z_k_device_busy_start,
+				 (chk_dev - z_k_device_init_start))) {
 		return -EBUSY;
 	}
 	return 0;
@@ -125,8 +127,8 @@ int device_busy_check(struct device *chk_dev)
 void device_busy_set(struct device *busy_dev)
 {
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
-	atomic_set_bit((atomic_t *) __device_busy_start,
-				 (busy_dev - __device_init_start));
+	atomic_set_bit((atomic_t *) z_k_device_busy_start,
+				 (busy_dev - z_k_device_init_start));
 #else
 	ARG_UNUSED(busy_dev);
 #endif
@@ -135,8 +137,8 @@ void device_busy_set(struct device *busy_dev)
 void device_busy_clear(struct device *busy_dev)
 {
 #ifdef CONFIG_DEVICE_POWER_MANAGEMENT
-	atomic_clear_bit((atomic_t *) __device_busy_start,
-				 (busy_dev - __device_init_start));
+	atomic_clear_bit((atomic_t *) z_k_device_busy_start,
+				 (busy_dev - z_k_device_init_start));
 #else
 	ARG_UNUSED(busy_dev);
 #endif

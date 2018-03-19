@@ -20,8 +20,8 @@
 #include <syscall_handler.h>
 #include <kswap.h>
 
-extern struct k_stack _k_stack_list_start[];
-extern struct k_stack _k_stack_list_end[];
+extern struct k_stack z_k_stack_list_start[];
+extern struct k_stack z_k_stack_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -32,13 +32,14 @@ struct k_stack *z_k_trace_list_k_stack;
  */
 static int init_stack_module(struct device *dev)
 {
-	ARG_UNUSED(dev);
-
 	struct k_stack *stack;
 
-	for (stack = _k_stack_list_start; stack < _k_stack_list_end; stack++) {
+	for (stack = z_k_stack_list_start;
+	     stack < z_k_stack_list_end; stack++) {
 		SYS_TRACING_OBJ_INIT(k_stack, stack);
 	}
+
+	ARG_UNUSED(dev);
 	return 0;
 }
 

@@ -42,8 +42,8 @@
 #define RECORD_CONFLICT(mutex) do { } while ((0))
 
 
-extern struct k_mutex _k_mutex_list_start[];
-extern struct k_mutex _k_mutex_list_end[];
+extern struct k_mutex z_k_mutex_list_start[];
+extern struct k_mutex z_k_mutex_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -54,13 +54,15 @@ struct k_mutex *z_k_trace_list_k_mutex;
  */
 static int init_mutex_module(struct device *dev)
 {
-	ARG_UNUSED(dev);
-
 	struct k_mutex *mutex;
 
-	for (mutex = _k_mutex_list_start; mutex < _k_mutex_list_end; mutex++) {
+	for (mutex = z_k_mutex_list_start;
+	     mutex < z_k_mutex_list_end; mutex++) {
 		SYS_TRACING_OBJ_INIT(k_mutex, mutex);
 	}
+
+	ARG_UNUSED(dev);
+
 	return 0;
 }
 

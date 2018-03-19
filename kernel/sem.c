@@ -29,8 +29,8 @@
 #include <syscall_handler.h>
 #include <kswap.h>
 
-extern struct k_sem _k_sem_list_start[];
-extern struct k_sem _k_sem_list_end[];
+extern struct k_sem z_k_sem_list_start[];
+extern struct k_sem z_k_sem_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -45,7 +45,7 @@ static int init_sem_module(struct device *dev)
 
 	struct k_sem *sem;
 
-	for (sem = _k_sem_list_start; sem < _k_sem_list_end; sem++) {
+	for (sem = z_k_sem_list_start; sem < z_k_sem_list_end; sem++) {
 		SYS_TRACING_OBJ_INIT(k_sem, sem);
 	}
 	return 0;

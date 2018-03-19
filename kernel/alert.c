@@ -18,10 +18,10 @@
 #include <linker/sections.h>
 #include <syscall_handler.h>
 
-extern struct k_alert _k_alert_list_start[];
-extern struct k_alert _k_alert_list_end[];
+extern struct k_alert z_k_alert_list_start[];
+extern struct k_alert z_k_alert_list_end[];
 
-struct k_alert *_trace_list_k_alert;
+struct k_alert *z_k_trace_list_k_alert;
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -30,13 +30,15 @@ struct k_alert *_trace_list_k_alert;
  */
 static int init_alert_module(struct device *dev)
 {
-	ARG_UNUSED(dev);
-
 	struct k_alert *alert;
 
-	for (alert = _k_alert_list_start; alert < _k_alert_list_end; alert++) {
+	for (alert = z_k_alert_list_start;
+	     alert < z_k_alert_list_end; alert++) {
 		SYS_TRACING_OBJ_INIT(k_alert, alert);
 	}
+
+	ARG_UNUSED(dev);
+
 	return 0;
 }
 

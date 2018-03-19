@@ -22,8 +22,8 @@
 #include <init.h>
 #include <kswap.h>
 
-extern struct k_queue _k_queue_list_start[];
-extern struct k_queue _k_queue_list_end[];
+extern struct k_queue z_k_queue_list_start[];
+extern struct k_queue z_k_queue_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
@@ -34,13 +34,15 @@ struct k_queue *z_k_trace_list_k_queue;
  */
 static int init_queue_module(struct device *dev)
 {
-	ARG_UNUSED(dev);
-
 	struct k_queue *queue;
 
-	for (queue = _k_queue_list_start; queue < _k_queue_list_end; queue++) {
+	for (queue = z_k_queue_list_start;
+	     queue < z_k_queue_list_end; queue++) {
 		SYS_TRACING_OBJ_INIT(k_queue, queue);
 	}
+
+	ARG_UNUSED(dev);
+
 	return 0;
 }
 

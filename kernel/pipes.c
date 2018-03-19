@@ -36,8 +36,8 @@ struct k_pipe_async {
 	struct k_pipe_desc  desc;     /* Pipe message descriptor */
 };
 
-extern struct k_pipe _k_pipe_list_start[];
-extern struct k_pipe _k_pipe_list_end[];
+extern struct k_pipe z_k_pipe_list_start[];
+extern struct k_pipe z_k_pipe_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 struct k_pipe *z_k_trace_list_k_pipe;
@@ -116,7 +116,7 @@ static int init_pipes_module(struct device *dev)
 #ifdef CONFIG_OBJECT_TRACING
 	struct k_pipe *pipe;
 
-	for (pipe = _k_pipe_list_start; pipe < _k_pipe_list_end; pipe++) {
+	for (pipe = z_k_pipe_list_start; pipe < z_k_pipe_list_end; pipe++) {
 		SYS_TRACING_OBJ_INIT(k_pipe, pipe);
 	}
 #endif /* CONFIG_OBJECT_TRACING */
