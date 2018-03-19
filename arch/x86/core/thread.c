@@ -159,8 +159,8 @@ void _x86_swap_update_page_tables(struct k_thread *incoming,
 		 /* Ensure that the outgoing mem domain configuration
 		  * is set back to default state.
 		  */
-		_arch_mem_domain_destroy(outgoing->mem_domain_info.mem_domain);
-		_arch_mem_domain_configure(incoming);
+		z_arch_mem_domain_destroy(outgoing->mem_domain_info.mem_domain);
+		z_arch_mem_domain_configure(incoming);
 	}
 }
 

@@ -72,12 +72,12 @@ void configure_mpu_mem_domain(struct k_thread *thread)
 	arm_core_mpu_enable();
 }
 
-void _arch_mem_domain_configure(struct k_thread *thread)
+void z_arch_mem_domain_configure(struct k_thread *thread)
 {
 	configure_mpu_mem_domain(thread);
 }
 
-int _arch_mem_domain_max_partitions_get(void)
+int z_arch_mem_domain_max_partitions_get(void)
 {
 	return arm_core_mpu_get_max_domain_partition_regions();
 }
@@ -85,7 +85,7 @@ int _arch_mem_domain_max_partitions_get(void)
 /*
  * Reset MPU region for a single memory partition
  */
-void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
+void z_arch_mem_domain_partition_remove(struct k_mem_domain *domain,
 				       u32_t  partition_id)
 {
 	ARG_UNUSED(domain);
@@ -99,7 +99,7 @@ void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
 /*
  * Destroy MPU regions for the mem domain
  */
-void _arch_mem_domain_destroy(struct k_mem_domain *domain)
+void z_arch_mem_domain_destroy(struct k_mem_domain *domain)
 {
 	ARG_UNUSED(domain);
 

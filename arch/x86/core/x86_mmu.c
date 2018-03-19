@@ -261,7 +261,7 @@ static inline void _x86_mem_domain_pages_update(struct k_mem_domain *mem_domain,
 }
 
 /* Load the partitions of the thread. */
-void _arch_mem_domain_configure(struct k_thread *thread)
+void z_arch_mem_domain_configure(struct k_thread *thread)
 {
 	_x86_mem_domain_pages_update(thread->mem_domain_info.mem_domain,
 				     X86_MEM_DOMAIN_SET_PAGES);
@@ -270,13 +270,13 @@ void _arch_mem_domain_configure(struct k_thread *thread)
 /* Destroy or reset the mmu page tables when necessary.
  * Needed when either swap takes place or k_mem_domain_destroy is called.
  */
-void _arch_mem_domain_destroy(struct k_mem_domain *domain)
+void z_arch_mem_domain_destroy(struct k_mem_domain *domain)
 {
 	_x86_mem_domain_pages_update(domain, X86_MEM_DOMAIN_RESET_PAGES);
 }
 
 /* Reset/destroy one partition spcified in the argument of the API. */
-void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
+void z_arch_mem_domain_partition_remove(struct k_mem_domain *domain,
 				       u32_t  partition_id)
 {
 	u32_t total_partitions;
@@ -301,7 +301,7 @@ void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
 	return;
 }
 
-u8_t _arch_mem_domain_max_partitions_get(void)
+u8_t z_arch_mem_domain_max_partitions_get(void)
 {
 	return CONFIG_MAX_DOMAIN_PARTITIONS;
 }
