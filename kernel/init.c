@@ -84,13 +84,13 @@ u64_t __noinit z_k_idle_time_stamp;  /* timestamp when CPU goes idle */
 #define MAIN_STACK_SIZE CONFIG_MAIN_STACK_SIZE
 
 K_THREAD_STACK_DEFINE(z_k_main_stack, MAIN_STACK_SIZE);
-K_THREAD_STACK_DEFINE(_idle_stack, IDLE_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_idle_stack, IDLE_STACK_SIZE);
 
 static struct k_thread z_k_main_thread_s;
-static struct k_thread _idle_thread_s;
+static struct k_thread z_k_idle_thread_s;
 
 k_tid_t const z_k_main_thread = (k_tid_t)&z_k_main_thread_s;
-k_tid_t const _idle_thread = (k_tid_t)&_idle_thread_s;
+k_tid_t const z_k_idle_thread = (k_tid_t)&z_k_idle_thread_s;
 
 /*
  * storage space for the interrupt stack
@@ -112,24 +112,24 @@ K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
  * clean this up in the future.
  */
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 1
-K_THREAD_STACK_DEFINE(_idle_stack1, IDLE_STACK_SIZE);
-static struct k_thread _idle_thread1_s;
-k_tid_t const _idle_thread1 = (k_tid_t)&_idle_thread1_s;
-K_THREAD_STACK_DEFINE(_interrupt_stack1, CONFIG_ISR_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_idle_stack1, IDLE_STACK_SIZE);
+static struct k_thread z_k_idle_thread1_s;
+k_tid_t const z_k_idle_thread1 = (k_tid_t)&z_k_idle_thread1_s;
+K_THREAD_STACK_DEFINE(z_k_interrupt_stack1, CONFIG_ISR_STACK_SIZE);
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 2
-K_THREAD_STACK_DEFINE(_idle_stack2, IDLE_STACK_SIZE);
-static struct k_thread _idle_thread2_s;
-k_tid_t const _idle_thread2 = (k_tid_t)&_idle_thread2_s;
-K_THREAD_STACK_DEFINE(_interrupt_stack2, CONFIG_ISR_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_idle_stack2, IDLE_STACK_SIZE);
+static struct k_thread z_k_idle_thread2_s;
+k_tid_t const z_k_idle_thread2 = (k_tid_t)&z_k_idle_thread2_s;
+K_THREAD_STACK_DEFINE(z_k_interrupt_stack2, CONFIG_ISR_STACK_SIZE);
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 3
-K_THREAD_STACK_DEFINE(_idle_stack3, IDLE_STACK_SIZE);
-static struct k_thread _idle_thread3_s;
-k_tid_t const _idle_thread3 = (k_tid_t)&_idle_thread3_s;
-K_THREAD_STACK_DEFINE(_interrupt_stack3, CONFIG_ISR_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_idle_stack3, IDLE_STACK_SIZE);
+static struct k_thread z_k_idle_thread3_s;
+k_tid_t const z_k_idle_thread3 = (k_tid_t)&z_k_idle_thread3_s;
+K_THREAD_STACK_DEFINE(z_k_interrupt_stack3, CONFIG_ISR_STACK_SIZE);
 #endif
 
 #ifdef CONFIG_SYS_CLOCK_EXISTS
@@ -151,7 +151,7 @@ void k_call_stacks_analyze(void)
 {
 	printk("Kernel stacks:\n");
 	STACK_ANALYZE("main     ", z_k_main_stack);
-	STACK_ANALYZE("idle     ", _idle_stack);
+	STACK_ANALYZE("idle     ", z_k_idle_stack);
 	STACK_ANALYZE("interrupt", z_k_interrupt_stack);
 	STACK_ANALYZE("workqueue", sys_work_q_stack);
 }
@@ -355,27 +355,27 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 	_ready_thread(_main_thread);
 
 #ifdef CONFIG_MULTITHREADING
-	init_idle_thread(_idle_thread, _idle_stack);
+	init_idle_thread(z_k_idle_thread, z_k_idle_stack);
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 1
-	init_idle_thread(_idle_thread1, _idle_stack1);
+	init_idle_thread(z_k_idle_thread1, z_k_idle_stack1);
 	_kernel.cpus[1].id = 1;
-	_kernel.cpus[1].irq_stack = K_THREAD_STACK_BUFFER(_interrupt_stack1)
+	_kernel.cpus[1].irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack1)
 		+ CONFIG_ISR_STACK_SIZE;
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 2
-	init_idle_thread(_idle_thread2, _idle_stack2);
+	init_idle_thread(z_k_idle_thread2, z_k_idle_stack2);
 	_kernel.cpus[2].id = 2;
-	_kernel.cpus[2].irq_stack = K_THREAD_STACK_BUFFER(_interrupt_stack2)
+	_kernel.cpus[2].irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack2)
 		+ CONFIG_ISR_STACK_SIZE;
 #endif
 
 #if defined(CONFIG_SMP) && CONFIG_MP_NUM_CPUS > 3
-	init_idle_thread(_idle_thread3, _idle_stack3);
+	init_idle_thread(z_k_idle_thread3, z_k_idle_stack3);
 	_kernel.cpus[3].id = 3;
-	_kernel.cpus[3].irq_stack = K_THREAD_STACK_BUFFER(_interrupt_stack3)
+	_kernel.cpus[3].irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack3)
 		+ CONFIG_ISR_STACK_SIZE;
 #endif
 
