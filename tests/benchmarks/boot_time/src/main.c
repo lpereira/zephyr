@@ -23,7 +23,7 @@
 /* externs */
 extern u64_t __start_time_stamp;    /* timestamp when kernel begins executing */
 extern u64_t __main_time_stamp;     /* timestamp when main() begins executing */
-extern u64_t __idle_time_stamp;     /* timestamp when CPU went idle */
+extern u64_t z_k_idle_time_stamp;     /* timestamp when CPU went idle */
 
 void main(void)
 {
@@ -50,7 +50,7 @@ void main(void)
 	main_us    =  s_main_time_stamp / freq;
 	s_task_time_stamp =  task_time_stamp   - __start_time_stamp;
 	task_us    =  s_task_time_stamp / freq;
-	s_idle_time_stamp =  __idle_time_stamp - __start_time_stamp;
+	s_idle_time_stamp =  z_k_idle_time_stamp - __start_time_stamp;
 	idle_us    =  s_idle_time_stamp / freq;
 
 	/* Indicate start for sanity test suite */
