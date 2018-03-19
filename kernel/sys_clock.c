@@ -59,7 +59,7 @@ static u32_t next_ts;
  * @return the current system tick count
  *
  */
-u32_t _tick_get_32(void)
+u32_t z_tick_get_32(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
 	return (u32_t)_get_elapsed_clock_time();
@@ -67,7 +67,7 @@ u32_t _tick_get_32(void)
 	return (u32_t) z_sys_clock_tick_count;
 #endif
 }
-FUNC_ALIAS(_tick_get_32, sys_tick_get_32, u32_t);
+FUNC_ALIAS(z_tick_get_32, sys_tick_get_32, u32_t);
 
 u32_t _impl_k_uptime_get_32(void)
 {
@@ -75,7 +75,7 @@ u32_t _impl_k_uptime_get_32(void)
 	__ASSERT(z_sys_clock_always_on,
 		 "Call k_enable_sys_clock_always_on to use clock API");
 #endif
-	return __ticks_to_ms(_tick_get_32());
+	return __ticks_to_ms(z_tick_get_32());
 }
 
 #ifdef CONFIG_USERSPACE
@@ -95,7 +95,7 @@ _SYSCALL_HANDLER(k_uptime_get_32)
  * @return the current system tick count
  *
  */
-s64_t _tick_get(void)
+s64_t z_tick_get(void)
 {
 	s64_t tmp_sys_clock_tick_count;
 	/*
@@ -114,7 +114,7 @@ s64_t _tick_get(void)
 	irq_unlock(imask);
 	return tmp_sys_clock_tick_count;
 }
-FUNC_ALIAS(_tick_get, sys_tick_get, s64_t);
+FUNC_ALIAS(z_tick_get, sys_tick_get, s64_t);
 
 s64_t _impl_k_uptime_get(void)
 {
@@ -122,7 +122,7 @@ s64_t _impl_k_uptime_get(void)
 	__ASSERT(z_sys_clock_always_on,
 		 "Call k_enable_sys_clock_always_on to use clock API");
 #endif
-	return __ticks_to_ms(_tick_get());
+	return __ticks_to_ms(z_tick_get());
 }
 
 #ifdef CONFIG_USERSPACE

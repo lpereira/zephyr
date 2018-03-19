@@ -89,8 +89,8 @@
 
 
 
-extern u32_t _tick_get_32(void);
-extern s64_t _tick_get(void);
+extern u32_t z_tick_get_32(void);
+extern s64_t z_tick_get(void);
 
 typedef struct {
 	int command;            /* command to process   */
@@ -297,15 +297,15 @@ static int test_kernel_interrupts(disable_int_func disable_int,
 	int imask;
 
 	/* Align to a "tick boundary" */
-	tick = _tick_get_32();
-	while (_tick_get_32() == tick) {
+	tick = z_tick_get_32();
+	while (z_tick_get_32() == tick) {
 #if defined(CONFIG_ARCH_POSIX)
 		k_busy_wait(1000);
 #endif
 	}
 
 	tick++;
-	while (_tick_get_32() == tick) {
+	while (z_tick_get_32() == tick) {
 #if defined(CONFIG_ARCH_POSIX)
 		k_busy_wait(1000);
 #endif
@@ -322,15 +322,15 @@ static int test_kernel_interrupts(disable_int_func disable_int,
 	count <<= 4;
 
 	imask = disable_int(irq);
-	tick = _tick_get_32();
+	tick = z_tick_get_32();
 	for (i = 0; i < count; i++) {
-		_tick_get_32();
+		z_tick_get_32();
 #if defined(CONFIG_ARCH_POSIX)
 		k_busy_wait(1000);
 #endif
 	}
 
-	tick2 = _tick_get_32();
+	tick2 = z_tick_get_32();
 
 	/*
 	 * Re-enable interrupts before returning (for both success and failure
@@ -346,13 +346,13 @@ static int test_kernel_interrupts(disable_int_func disable_int,
 
 	/* Now repeat with interrupts unlocked. */
 	for (i = 0; i < count; i++) {
-		_tick_get_32();
+		z_tick_get_32();
 #if defined(CONFIG_ARCH_POSIX)
 		k_busy_wait(1000);
 #endif
 	}
 
-	tick2 = _tick_get_32();
+	tick2 = z_tick_get_32();
 	if (tick == tick2) {
 		TC_ERROR("tick didn't advance as expected\n");
 		return TC_FAIL;
