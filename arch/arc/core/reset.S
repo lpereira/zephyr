@@ -16,7 +16,7 @@
 #include <arch/cpu.h>
 
 GDATA(z_k_interrupt_stack)
-GDATA(_main_stack)
+GDATA(z_k_main_stack)
 
 /* use one of the available interrupt stacks during init */
 
@@ -89,7 +89,7 @@ done_cache_invalidate:
 	 * FIRQ stack when CONFIG_INIT_STACKS is enabled before switching to
 	 * one of them for the rest of the early boot
 	 */
-	mov sp, _main_stack
+	mov sp, z_k_main_stack
 	add sp, sp, CONFIG_MAIN_STACK_SIZE
 
 	mov_s r0, z_k_interrupt_stack

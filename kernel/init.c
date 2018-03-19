@@ -83,13 +83,13 @@ u64_t __noinit z_k_idle_time_stamp;  /* timestamp when CPU goes idle */
 
 #define MAIN_STACK_SIZE CONFIG_MAIN_STACK_SIZE
 
-K_THREAD_STACK_DEFINE(_main_stack, MAIN_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_main_stack, MAIN_STACK_SIZE);
 K_THREAD_STACK_DEFINE(_idle_stack, IDLE_STACK_SIZE);
 
-static struct k_thread _main_thread_s;
+static struct k_thread z_k_main_thread_s;
 static struct k_thread _idle_thread_s;
 
-k_tid_t const _main_thread = (k_tid_t)&_main_thread_s;
+k_tid_t const z_k_main_thread = (k_tid_t)&z_k_main_thread_s;
 k_tid_t const _idle_thread = (k_tid_t)&_idle_thread_s;
 
 /*
@@ -150,7 +150,7 @@ extern K_THREAD_STACK_DEFINE(sys_work_q_stack,
 void k_call_stacks_analyze(void)
 {
 	printk("Kernel stacks:\n");
-	STACK_ANALYZE("main     ", _main_stack);
+	STACK_ANALYZE("main     ", z_k_main_stack);
 	STACK_ANALYZE("idle     ", _idle_stack);
 	STACK_ANALYZE("interrupt", z_k_interrupt_stack);
 	STACK_ANALYZE("workqueue", sys_work_q_stack);
@@ -347,7 +347,7 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 	_ready_q.cache = _main_thread;
 #endif
 
-	_setup_new_thread(_main_thread, _main_stack,
+	_setup_new_thread(_main_thread, z_k_main_stack,
 			  MAIN_STACK_SIZE, bg_thread_main,
 			  NULL, NULL, NULL,
 			  CONFIG_MAIN_THREAD_PRIORITY, K_ESSENTIAL);
@@ -389,8 +389,8 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 static void switch_to_main_thread(void)
 {
 #ifdef CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN
-	_arch_switch_to_main_thread(_main_thread, _main_stack, MAIN_STACK_SIZE,
-				    bg_thread_main);
+	_arch_switch_to_main_thread(_main_thread, z_k_main_stack,
+				    MAIN_STACK_SIZE, bg_thread_main);
 #else
 	/*
 	 * Context switch to main task (entry function is _main()): the
