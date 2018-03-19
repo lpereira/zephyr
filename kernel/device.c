@@ -104,7 +104,7 @@ int device_any_busy_check(void)
 	int i = 0;
 
 	for (i = 0; i < DEVICE_BUSY_SIZE; i++) {
-		if (__device_busy_start[i] != 0) {
+		if (z_k_device_busy_start[i] != 0) {
 			return -EBUSY;
 		}
 	}

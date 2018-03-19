@@ -16,7 +16,7 @@ extern struct k_timer _k_timer_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
-struct k_timer *_trace_list_k_timer;
+struct k_timer *z_k_trace_list_k_timer;
 
 /*
  * Complete initialization of statically defined timers.

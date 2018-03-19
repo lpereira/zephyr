@@ -51,7 +51,7 @@ extern struct k_mbox _k_mbox_list_start[];
 extern struct k_mbox _k_mbox_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
-struct k_mbox *_trace_list_k_mbox;
+struct k_mbox *z_k_trace_list_k_mbox;
 #endif	/* CONFIG_OBJECT_TRACING */
 
 #if (CONFIG_NUM_MBOX_ASYNC_MSGS > 0) || \

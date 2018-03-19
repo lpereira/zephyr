@@ -23,7 +23,7 @@ s32_t _sys_idle_threshold_ticks = CONFIG_TICKLESS_IDLE_THRESH;
 #define _must_enter_tickless_idle(ticks) (1)
 #else
 #define _must_enter_tickless_idle(ticks) \
-		((ticks == K_FOREVER) || (ticks >= _sys_idle_threshold_ticks))
+		((ticks == K_FOREVER) || (ticks >= z_sys_idle_threshold_ticks))
 #endif
 #else
 #define _must_enter_tickless_idle(ticks) ((void)ticks, (0))
@@ -34,7 +34,7 @@ s32_t _sys_idle_threshold_ticks = CONFIG_TICKLESS_IDLE_THRESH;
  * Used to allow _sys_soc_suspend() implementation to control notification
  * of the event that caused exit from kernel idling after pm operations.
  */
-unsigned char _sys_pm_idle_exit_notify;
+unsigned char z_sys_pm_idle_exit_notify;
 
 void __attribute__((weak)) _sys_soc_resume(void)
 {
@@ -99,7 +99,7 @@ static void sys_power_save_idle(s32_t ticks)
 #if (defined(CONFIG_SYS_POWER_LOW_POWER_STATE) || \
 	defined(CONFIG_SYS_POWER_DEEP_SLEEP))
 
-	_sys_pm_idle_exit_notify = 1;
+	z_sys_pm_idle_exit_notify = 1;
 
 	/*
 	 * Call the suspend hook function of the soc interface to allow
@@ -115,7 +115,7 @@ static void sys_power_save_idle(s32_t ticks)
 	 * the kernel's scheduling logic.
 	 */
 	if (_sys_soc_suspend(ticks) == SYS_PM_NOT_HANDLED) {
-		_sys_pm_idle_exit_notify = 0;
+		z_sys_pm_idle_exit_notify = 0;
 		k_cpu_idle();
 	}
 #else
@@ -132,7 +132,7 @@ void _sys_power_save_idle_exit(s32_t ticks)
 	 * disabled by calling _sys_soc_pm_idle_exit_notification_disable().
 	 * Alternatively it can be simply ignored if not required.
 	 */
-	if (_sys_pm_idle_exit_notify) {
+	if (z_sys_pm_idle_exit_notify) {
 		_sys_soc_resume();
 	}
 #endif
@@ -159,9 +159,9 @@ void idle(void *unused1, void *unused2, void *unused3)
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	/* record timestamp when idling begins */
 
-	extern u64_t __idle_time_stamp;
+	extern u64_t z_k_idle_time_stamp;
 
-	__idle_time_stamp = (u64_t)k_cycle_get_32();
+	z_k_idle_time_stamp = (u64_t)k_cycle_get_32();
 #endif
 
 #ifdef CONFIG_SMP

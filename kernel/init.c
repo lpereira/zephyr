@@ -64,9 +64,9 @@ static const unsigned int boot_delay;
 /* boot time measurement items */
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
-u64_t __noinit __start_time_stamp; /* timestamp when kernel starts */
-u64_t __noinit __main_time_stamp;  /* timestamp when main task starts */
-u64_t __noinit __idle_time_stamp;  /* timestamp when CPU goes idle */
+u64_t __noinit z_k_start_time_stamp; /* timestamp when kernel starts */
+u64_t __noinit z_k_main_time_stamp;  /* timestamp when main task starts */
+u64_t __noinit z_k_idle_time_stamp;  /* timestamp when CPU goes idle */
 #endif
 
 /* init/main and idle threads */
@@ -245,9 +245,9 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	/* record timestamp for kernel's _main() function */
-	extern u64_t __main_time_stamp;
+	extern u64_t z_k_main_time_stamp;
 
-	__main_time_stamp = (u64_t)k_cycle_get_32();
+	z_k_main_time_stamp = (u64_t)k_cycle_get_32();
 #endif
 
 	extern void main(void);
@@ -255,7 +255,7 @@ static void bg_thread_main(void *unused1, void *unused2, void *unused3)
 	main();
 
 	/* Terminate thread normally since it has no more work to do */
-	_main_thread->base.user_options &= ~K_ESSENTIAL;
+	z_k_main_thread->base.user_options &= ~K_ESSENTIAL;
 }
 
 void __weak main(void)

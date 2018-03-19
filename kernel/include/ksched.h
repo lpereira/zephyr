@@ -13,10 +13,10 @@
 #include <logging/kernel_event_logger.h>
 #endif /* CONFIG_KERNEL_EVENT_LOGGER */
 
-extern k_tid_t const _main_thread;
+extern const k_tid_t z_k_main_thread;
 
 #ifndef CONFIG_SMP
-extern k_tid_t const _idle_thread;
+extern const k_tid_t z_k_idle_thread;
 #endif
 
 extern void _add_thread_to_ready_q(struct k_thread *thread);
@@ -56,7 +56,7 @@ static inline int _is_idle_thread_ptr(k_tid_t thread)
 #ifdef CONFIG_SMP
 	return thread->base.is_idle;
 #else
-	return thread == _idle_thread;
+	return thread == z_k_idle_thread;
 #endif
 }
 
@@ -453,9 +453,9 @@ static inline struct k_thread *
 _find_first_thread_to_unpend(_wait_q_t *wait_q, struct k_thread *from)
 {
 #ifdef CONFIG_SYS_CLOCK_EXISTS
-	extern volatile int _handling_timeouts;
+	extern volatile int z_k_handling_timeouts;
 
-	if (_handling_timeouts) {
+	if (z_k_handling_timeouts) {
 		sys_dlist_t *q = (sys_dlist_t *)wait_q;
 		sys_dnode_t *cur = from ? &from->base.k_q_node : NULL;
 

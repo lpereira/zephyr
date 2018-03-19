@@ -155,17 +155,17 @@ struct _kernel {
 
 typedef struct _kernel _kernel_t;
 
-extern struct _kernel _kernel;
+extern struct _kernel z_k_kernel;
 
 #ifdef CONFIG_SMP
 #define _current (_arch_curr_cpu()->current)
 #else
-#define _current _kernel.current
+#define _current z_k_kernel.current
 #endif
 
-#define _ready_q _kernel.ready_q
-#define _timeout_q _kernel.timeout_q
-#define _threads _kernel.threads
+#define _ready_q z_k_kernel.ready_q
+#define _timeout_q z_k_kernel.timeout_q
+#define _threads z_k_kernel.threads
 
 #include <kernel_arch_func.h>
 

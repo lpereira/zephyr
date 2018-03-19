@@ -182,13 +182,13 @@ void int_latency_show(void)
 	}
 
 	if (int_locked_latency_min != ULONG_MAX) {
-		if (_hw_irq_to_c_handler_latency == ULONG_MAX) {
+		if (z_k_hw_irq_to_c_handler_latency == ULONG_MAX) {
 			intHandlerLatency = 0;
 			printk(" Min latency from hw interrupt up to 'C' int. "
 			       "handler: "
 			       "not measured\n");
 		} else {
-			intHandlerLatency = _hw_irq_to_c_handler_latency;
+			intHandlerLatency = z_k_hw_irq_to_c_handler_latency;
 			printk(" Min latency from hw interrupt up to 'C' int. "
 			       "handler:"
 			       " %d tcs = %d nsec\n",

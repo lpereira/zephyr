@@ -22,7 +22,7 @@
 #include <misc/__assert.h>
 #include <syscall_handler.h>
 
-extern void _k_thread_single_abort(struct k_thread *thread);
+extern void z_k_thread_single_abort(struct k_thread *thread);
 
 #if !defined(CONFIG_ARCH_HAS_THREAD_ABORT)
 void _impl_k_thread_abort(k_tid_t thread)

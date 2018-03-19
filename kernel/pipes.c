@@ -40,7 +40,7 @@ extern struct k_pipe _k_pipe_list_start[];
 extern struct k_pipe _k_pipe_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
-struct k_pipe *_trace_list_k_pipe;
+struct k_pipe *z_k_trace_list_k_pipe;
 #endif	/* CONFIG_OBJECT_TRACING */
 
 #if (CONFIG_NUM_PIPE_ASYNC_MSGS > 0)

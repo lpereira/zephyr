@@ -34,7 +34,7 @@ extern struct k_sem _k_sem_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
-struct k_sem *_trace_list_k_sem;
+struct k_sem *z_k_trace_list_k_sem;
 
 /*
  * Complete initialization of statically defined semaphores.

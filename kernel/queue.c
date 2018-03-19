@@ -27,7 +27,7 @@ extern struct k_queue _k_queue_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
-struct k_queue *_trace_list_k_queue;
+struct k_queue *z_k_trace_list_k_queue;
 
 /*
  * Complete initialization of statically defined queues.

@@ -445,18 +445,18 @@ _SYSCALL_HANDLER0_SIMPLE(k_current_get);
 #endif
 
 #ifdef CONFIG_TIMESLICING
-extern s32_t _time_slice_duration;    /* Measured in ms */
-extern s32_t _time_slice_elapsed;     /* Measured in ms */
-extern int _time_slice_prio_ceiling;
+extern s32_t z_k_time_slice_duration;    /* Measured in ms */
+extern s32_t z_k_time_slice_elapsed;     /* Measured in ms */
+extern int z_k_time_slice_prio_ceiling;
 
 void k_sched_time_slice_set(s32_t duration_in_ms, int prio)
 {
 	__ASSERT(duration_in_ms >= 0, "");
 	__ASSERT((prio >= 0) && (prio < CONFIG_NUM_PREEMPT_PRIORITIES), "");
 
-	_time_slice_duration = duration_in_ms;
-	_time_slice_elapsed = 0;
-	_time_slice_prio_ceiling = prio;
+	z_k_time_slice_duration = duration_in_ms;
+	z_k_time_slice_elapsed = 0;
+	z_k_time_slice_prio_ceiling = prio;
 }
 
 int _is_thread_time_slicing(struct k_thread *thread)
@@ -470,8 +470,13 @@ int _is_thread_time_slicing(struct k_thread *thread)
 	 * There should be multiple threads active with same priority
 	 */
 
-	if (!(_time_slice_duration > 0) || (_is_idle_thread_ptr(thread))
-	    || _is_prio_higher(thread->base.prio, _time_slice_prio_ceiling)) {
+	if (z_k_time_slice_duration <= 0) {
+		return 0;
+	}
+	if (_is_idle_thread_ptr(thread)) {
+		return 0;
+	}
+	if (_is_prio_higher(thread->base.prio, z_k_time_slice_prio_ceiling)) {
 		return 0;
 	}
 
@@ -492,8 +497,8 @@ void _update_time_slice_before_swap(void)
 
 	u32_t remaining = _get_remaining_program_time();
 
-	if (!remaining || (_time_slice_duration < remaining)) {
-		_set_time(_time_slice_duration);
+	if (!remaining || (z_k_time_slice_duration < remaining)) {
+		_set_time(z_k_time_slice_duration);
 	} else {
 		/* Account previous elapsed time and reprogram
 		 * timer with remaining time
@@ -503,7 +508,7 @@ void _update_time_slice_before_swap(void)
 
 #endif
 	/* Restart time slice count at new thread switch */
-	_time_slice_elapsed = 0;
+	z_k_time_slice_elapsed = 0;
 }
 #endif /* CONFIG_TIMESLICING */
 

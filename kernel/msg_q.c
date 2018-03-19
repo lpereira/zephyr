@@ -27,7 +27,7 @@ extern struct k_msgq _k_msgq_list_end[];
 
 #ifdef CONFIG_OBJECT_TRACING
 
-struct k_msgq *_trace_list_k_msgq;
+struct k_msgq *z_k_trace_list_k_msgq;
 
 /*
  * Complete initialization of statically defined message queues.

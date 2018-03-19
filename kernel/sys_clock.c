@@ -39,7 +39,7 @@ int sys_clock_hw_cycles_per_sec;
 /* updated by timer driver for tickless, stays at 1 for non-tickless */
 s32_t _sys_idle_elapsed_ticks = 1;
 
-volatile u64_t _sys_clock_tick_count;
+volatile u64_t z_sys_clock_tick_count;
 
 #ifdef CONFIG_TICKLESS_KERNEL
 /*
@@ -48,7 +48,7 @@ volatile u64_t _sys_clock_tick_count;
  * system clock to track passage of time without interruption.
  * To save power, this should be turned on only when required.
  */
-int _sys_clock_always_on;
+int z_sys_clock_always_on;
 
 static u32_t next_ts;
 #endif
@@ -64,7 +64,7 @@ u32_t _tick_get_32(void)
 #ifdef CONFIG_TICKLESS_KERNEL
 	return (u32_t)_get_elapsed_clock_time();
 #else
-	return (u32_t)_sys_clock_tick_count;
+	return (u32_t) z_sys_clock_tick_count;
 #endif
 }
 FUNC_ALIAS(_tick_get_32, sys_tick_get_32, u32_t);
@@ -72,7 +72,7 @@ FUNC_ALIAS(_tick_get_32, sys_tick_get_32, u32_t);
 u32_t _impl_k_uptime_get_32(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	__ASSERT(_sys_clock_always_on,
+	__ASSERT(z_sys_clock_always_on,
 		 "Call k_enable_sys_clock_always_on to use clock API");
 #endif
 	return __ticks_to_ms(_tick_get_32());
@@ -82,7 +82,7 @@ u32_t _impl_k_uptime_get_32(void)
 _SYSCALL_HANDLER(k_uptime_get_32)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	_SYSCALL_VERIFY(_sys_clock_always_on);
+	_SYSCALL_VERIFY(z_sys_clock_always_on);
 #endif
 	return _impl_k_uptime_get_32();
 }
@@ -109,7 +109,7 @@ s64_t _tick_get(void)
 #ifdef CONFIG_TICKLESS_KERNEL
 	tmp_sys_clock_tick_count = _get_elapsed_clock_time();
 #else
-	tmp_sys_clock_tick_count = _sys_clock_tick_count;
+	tmp_sys_clock_tick_count = z_sys_clock_tick_count;
 #endif
 	irq_unlock(imask);
 	return tmp_sys_clock_tick_count;
@@ -119,7 +119,7 @@ FUNC_ALIAS(_tick_get, sys_tick_get, s64_t);
 s64_t _impl_k_uptime_get(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	__ASSERT(_sys_clock_always_on,
+	__ASSERT(z_sys_clock_always_on,
 		 "Call k_enable_sys_clock_always_on to use clock API");
 #endif
 	return __ticks_to_ms(_tick_get());
@@ -167,7 +167,7 @@ u32_t k_uptime_delta_32(s64_t *reftime)
  * interrupt.
  */
 
-volatile int _handling_timeouts;
+volatile int z_k_handling_timeouts;
 
 static inline void handle_timeouts(s32_t ticks)
 {
@@ -198,7 +198,7 @@ static inline void handle_timeouts(s32_t ticks)
 	 * prohibited.
 	 */
 
-	_handling_timeouts = 1;
+	z_k_handling_timeouts = 1;
 
 	while (next) {
 
@@ -255,14 +255,14 @@ static inline void handle_timeouts(s32_t ticks)
 
 	_handle_expired_timeouts(&expired);
 
-	_handling_timeouts = 0;
+	z_k_handling_timeouts = 0;
 }
 #else
 	#define handle_timeouts(ticks) do { } while ((0))
 #endif
 
 #ifdef CONFIG_TIMESLICING
-s32_t _time_slice_elapsed;
+s32_t z_k_time_slice_elapsed;
 s32_t _time_slice_duration = CONFIG_TIMESLICE_SIZE;
 int  _time_slice_prio_ceiling = CONFIG_TIMESLICE_PRIORITY;
 
@@ -285,12 +285,12 @@ static void handle_time_slicing(s32_t ticks)
 		return;
 	}
 
-	_time_slice_elapsed += __ticks_to_ms(ticks);
-	if (_time_slice_elapsed >= _time_slice_duration) {
+	z_k_time_slice_elapsed += __ticks_to_ms(ticks);
+	if (z_k_time_slice_elapsed >= z_k_time_slice_duration) {
 
 		unsigned int key;
 
-		_time_slice_elapsed = 0;
+		z_k_time_slice_elapsed = 0;
 
 		key = irq_lock();
 		_move_thread_to_end_of_prio_q(_current);
@@ -298,7 +298,7 @@ static void handle_time_slicing(s32_t ticks)
 	}
 #ifdef CONFIG_TICKLESS_KERNEL
 	next_ts =
-	    _ms_to_ticks(_time_slice_duration - _time_slice_elapsed);
+	    _ms_to_ticks(z_k_time_slice_duration - z_k_time_slice_elapsed);
 #endif
 }
 #else
@@ -331,7 +331,7 @@ void _nano_sys_clock_tick_announce(s32_t ticks)
 
 	/* 64-bit value, ensure atomic access with irq lock */
 	key = irq_lock();
-	_sys_clock_tick_count += ticks;
+	z_sys_clock_tick_count += ticks;
 	irq_unlock(key);
 #endif
 	handle_timeouts(ticks);
