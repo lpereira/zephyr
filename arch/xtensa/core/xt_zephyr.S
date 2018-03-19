@@ -8,12 +8,12 @@
 #include <offsets_short.h>
 #include <kernel_structs.h>
 
-	.extern _interrupt_stack
+	.extern z_k_interrupt_stack
 	.extern _kernel
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 	.extern _timer_int_handler
 #endif
-	.set _interrupt_stack_top,  _interrupt_stack + CONFIG_ISR_STACK_SIZE
+	.set z_k_interrupt_stack_top, z_k_interrupt_stack+CONFIG_ISR_STACK_SIZE
 
 /*
  * _zxt_dispatch(_kernel_t *_kernel, _thread_t *_thread)
@@ -143,7 +143,7 @@ _zxt_int_enter:
 
 	l32i a3, a2, KERNEL_OFFSET(current)/* a3 := _kernel->current */
 	s32i a1, a3, THREAD_OFFSET(sp)     /* save SP to Current top of stack */
-	movi a1, _interrupt_stack_top      /* a1 = top of intr stack */
+	movi a1, z_k_interrupt_stack_top   /* a1 = top of intr stack */
 .Lnested:
 1:
 	mov a0, a12                        /* restore return addr and return */

@@ -26,7 +26,7 @@ extern void ReservedInterruptHandler(unsigned int intNo);
 /* Defined in xtensa_context.S */
 extern void _xt_coproc_init(void);
 
-extern K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
+extern K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 
 static ALWAYS_INLINE _cpu_t *_arch_curr_cpu(void)
 {
@@ -58,7 +58,7 @@ static ALWAYS_INLINE void kernel_arch_init(void)
 	cpu0->nested = 0;
 
 #if CONFIG_XTENSA_ASM2
-	cpu0->irq_stack = (K_THREAD_STACK_BUFFER(_interrupt_stack) +
+	cpu0->irq_stack = (K_THREAD_STACK_BUFFER(z_k_interrupt_stack) +
 			   CONFIG_ISR_STACK_SIZE);
 
 	/* The asm2 scheme keeps the kernel pointer in MISC0 for easy

@@ -33,7 +33,7 @@ extern "C" {
 
 #ifndef _ASMLANGUAGE
 
-extern K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
+extern K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 
 /*
  * _irq_setup
@@ -55,7 +55,8 @@ static ALWAYS_INLINE void _irq_setup(void)
 	_arc_v2_aux_reg_write(_ARC_V2_AUX_IRQ_CTRL, aux_irq_ctrl_value);
 
 	_kernel.irq_stack =
-		K_THREAD_STACK_BUFFER(_interrupt_stack) + CONFIG_ISR_STACK_SIZE;
+		K_THREAD_STACK_BUFFER(z_k_interrupt_stack) +
+		CONFIG_ISR_STACK_SIZE;
 }
 
 #endif /* _ASMLANGUAGE */

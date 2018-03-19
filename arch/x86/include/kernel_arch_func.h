@@ -20,7 +20,7 @@ extern "C" {
 #define STACK_ROUND_UP(x) ROUND_UP(x, STACK_ALIGN_SIZE)
 #define STACK_ROUND_DOWN(x) ROUND_DOWN(x, STACK_ALIGN_SIZE)
 
-extern K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
+extern K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 
 /**
  *
@@ -35,10 +35,10 @@ extern K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 static inline void kernel_arch_init(void)
 {
 	_kernel.nested = 0;
-	_kernel.irq_stack = K_THREAD_STACK_BUFFER(_interrupt_stack) +
+	_kernel.irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack) +
 				CONFIG_ISR_STACK_SIZE;
 #if CONFIG_X86_STACK_PROTECTION
-	_x86_mmu_set_flags(_interrupt_stack, MMU_PAGE_SIZE,
+	_x86_mmu_set_flags(z_k_interrupt_stack, MMU_PAGE_SIZE,
 			   MMU_ENTRY_NOT_PRESENT, MMU_PTE_P_MASK);
 #endif
 }

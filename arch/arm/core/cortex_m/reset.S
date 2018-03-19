@@ -22,7 +22,7 @@ _ASM_FILE_PROLOGUE
 
 GTEXT(__reset)
 GTEXT(memset)
-GDATA(_interrupt_stack)
+GDATA(z_k_interrupt_stack)
 
 /**
  *
@@ -73,7 +73,7 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
 #endif
 
 #ifdef CONFIG_INIT_STACKS
-    ldr r0, =_interrupt_stack
+    ldr r0, =z_k_interrupt_stack
     ldr r1, =0xaa
     ldr r2, =CONFIG_ISR_STACK_SIZE
     bl memset
@@ -81,9 +81,9 @@ SECTION_SUBSEC_FUNC(TEXT,_reset_section,__start)
 
     /*
      * Set PSP and use it to boot without using MSP, so that it
-     * gets set to _interrupt_stack during initialisation.
+     * gets set to z_k_interrupt_stack during initialisation.
      */
-    ldr r0, =_interrupt_stack
+    ldr r0, =z_k_interrupt_stack
     ldr r1, =CONFIG_ISR_STACK_SIZE
     adds r0, r0, r1
     msr PSP, r0
@@ -126,7 +126,7 @@ SECTION_FUNC(TEXT,_force_exit_one_nested_irq)
 		ldrne lr, =0xfffffffd
 		ldrne r2, =_do_software_reboot
 
-	ldr ip, =_interrupt_stack
+	ldr ip, =z_k_interrupt_stack
 	add.w ip, #(___esf_t_SIZEOF * 2) /* enough for a stack frame */
 	ldr r1, =0xfffffffe
 	and.w r2, r1

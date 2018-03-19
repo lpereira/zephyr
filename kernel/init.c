@@ -103,7 +103,7 @@ k_tid_t const _idle_thread = (k_tid_t)&_idle_thread_s;
 #if CONFIG_ISR_STACK_SIZE & (STACK_ALIGN - 1)
     #error "ISR_STACK_SIZE must be a multiple of the stack alignment"
 #endif
-K_THREAD_STACK_DEFINE(_interrupt_stack, CONFIG_ISR_STACK_SIZE);
+K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
 
 /*
  * Similar idle thread & interrupt stack definitions for the
@@ -152,7 +152,7 @@ void k_call_stacks_analyze(void)
 	printk("Kernel stacks:\n");
 	STACK_ANALYZE("main     ", _main_stack);
 	STACK_ANALYZE("idle     ", _idle_stack);
-	STACK_ANALYZE("interrupt", _interrupt_stack);
+	STACK_ANALYZE("interrupt", z_k_interrupt_stack);
 	STACK_ANALYZE("workqueue", sys_work_q_stack);
 }
 #else
