@@ -270,7 +270,7 @@ void _timer_int_handler(void *unused)
 #if defined(CONFIG_TICKLESS_KERNEL)
 	/* If timer not programmed or already consumed exit */
 	if (!programmed_ticks) {
-		if (_sys_clock_always_on) {
+		if (z_sys_clock_always_on) {
 			z_sys_clock_tick_count = _get_elapsed_clock_time();
 			program_max_cycles();
 		}
@@ -299,7 +299,7 @@ void _timer_int_handler(void *unused)
 	_sys_clock_tick_announce();
 
 	/* _sys_clock_tick_announce() could cause new programming */
-	if (!programmed_ticks && _sys_clock_always_on) {
+	if (!programmed_ticks && z_sys_clock_always_on) {
 		z_sys_clock_tick_count = _get_elapsed_clock_time();
 		program_max_cycles();
 	}
@@ -455,7 +455,7 @@ void _timer_idle_enter(s32_t ticks /* system ticks */
 void _timer_idle_exit(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	if (!programmed_ticks && _sys_clock_always_on) {
+	if (!programmed_ticks && z_sys_clock_always_on) {
 		program_max_cycles();
 	}
 #else

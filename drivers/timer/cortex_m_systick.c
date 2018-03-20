@@ -244,7 +244,7 @@ void _timer_int_handler(void *unused)
 #ifdef CONFIG_TICKLESS_IDLE
 #if defined(CONFIG_TICKLESS_KERNEL)
 	if (!idle_original_ticks) {
-		if (_sys_clock_always_on) {
+		if (z_sys_clock_always_on) {
 			z_sys_clock_tick_count = _get_elapsed_clock_time();
 			/* clear overflow tracking flag as it is accounted */
 			timer_overflow = 0;
@@ -274,7 +274,7 @@ void _timer_int_handler(void *unused)
 	_sys_clock_tick_announce();
 
 	/* _sys_clock_tick_announce() could cause new programming */
-	if (!idle_original_ticks && _sys_clock_always_on) {
+	if (!idle_original_ticks && z_sys_clock_always_on) {
 		z_sys_clock_tick_count = _get_elapsed_clock_time();
 		/* clear overflow tracking flag as it is accounted */
 		timer_overflow = 0;
@@ -606,7 +606,7 @@ void _timer_idle_exit(void)
 #ifdef CONFIG_TICKLESS_KERNEL
 	if (idle_mode == IDLE_TICKLESS) {
 		idle_mode = IDLE_NOT_TICKLESS;
-		if (!idle_original_ticks && _sys_clock_always_on) {
+		if (!idle_original_ticks && z_sys_clock_always_on) {
 			z_sys_clock_tick_count = _get_elapsed_clock_time();
 			timer_overflow = 0;
 			sysTickReloadSet(max_load_value);

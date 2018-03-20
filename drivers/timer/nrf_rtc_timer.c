@@ -407,7 +407,7 @@ u64_t _get_elapsed_clock_time(void)
 void _timer_idle_exit(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	if (!expected_sys_ticks && _sys_clock_always_on) {
+	if (!expected_sys_ticks && z_sys_clock_always_on) {
 		_set_time(_get_max_clock_time());
 	}
 #else

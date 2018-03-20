@@ -1437,9 +1437,9 @@ __syscall s64_t k_uptime_get(void);
  */
 static inline int k_enable_sys_clock_always_on(void)
 {
-	int prev_status = _sys_clock_always_on;
+	int prev_status = z_sys_clock_always_on;
 
-	_sys_clock_always_on = 1;
+	z_sys_clock_always_on = 1;
 	_enable_sys_clock();
 
 	return prev_status;
@@ -1455,7 +1455,7 @@ static inline int k_enable_sys_clock_always_on(void)
  */
 static inline void k_disable_sys_clock_always_on(void)
 {
-	_sys_clock_always_on = 0;
+	z_sys_clock_always_on = 0;
 }
 #else
 #define k_enable_sys_clock_always_on() do { } while ((0))

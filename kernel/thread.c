@@ -96,7 +96,7 @@ int saved_always_on = k_enable_sys_clock_always_on();
 	}
 #if defined(CONFIG_TICKLESS_KERNEL) && \
 	    !defined(CONFIG_BUSY_WAIT_USES_ALTERNATE_CLOCK)
-	_sys_clock_always_on = saved_always_on;
+	z_sys_clock_always_on = saved_always_on;
 #endif
 }
 #endif

@@ -31,7 +31,7 @@ extern "C" {
 #ifdef CONFIG_TICKLESS_KERNEL
 #define sys_clock_ticks_per_sec \
 		(1000000 / (CONFIG_TICKLESS_KERNEL_TIME_UNIT_IN_MICRO_SECS))
-extern int _sys_clock_always_on;
+extern int z_sys_clock_always_on;
 extern void _enable_sys_clock(void);
 #else
 #define sys_clock_ticks_per_sec CONFIG_SYS_CLOCK_TICKS_PER_SEC

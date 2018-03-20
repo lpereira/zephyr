@@ -191,7 +191,7 @@ void _timer_int_handler(void *unused)
 
 #ifdef CONFIG_TICKLESS_KERNEL
 	if (!programmed_ticks) {
-		if (_sys_clock_always_on) {
+		if (z_sys_clock_always_on) {
 			z_sys_clock_tick_count = _get_elapsed_clock_time();
 			program_max_cycles();
 		}
@@ -211,7 +211,7 @@ void _timer_int_handler(void *unused)
 	_sys_clock_tick_announce();
 
 	/* _sys_clock_tick_announce() could cause new programming */
-	if (!programmed_ticks && _sys_clock_always_on) {
+	if (!programmed_ticks && z_sys_clock_always_on) {
 		z_sys_clock_tick_count = _get_elapsed_clock_time();
 		program_max_cycles();
 	}
@@ -393,7 +393,7 @@ void _timer_idle_enter(s32_t ticks)
 void _timer_idle_exit(void)
 {
 #ifdef CONFIG_TICKLESS_KERNEL
-	if (!programmed_ticks && _sys_clock_always_on) {
+	if (!programmed_ticks && z_sys_clock_always_on) {
 		if (!(timer0_control_register_get() & _ARC_V2_TMR_CTRL_IE)) {
 			timer0_control_register_set(_ARC_V2_TMR_CTRL_NH |
 						    _ARC_V2_TMR_CTRL_IE);
