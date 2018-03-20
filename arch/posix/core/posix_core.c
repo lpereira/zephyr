@@ -473,7 +473,7 @@ void posix_abort_thread(int thread_idx)
 
 #if defined(CONFIG_ARCH_HAS_THREAD_ABORT)
 
-extern void _k_thread_single_abort(struct k_thread *thread);
+extern void z_k_thread_single_abort(struct k_thread *thread);
 
 void _impl_k_thread_abort(k_tid_t thread)
 {
@@ -491,7 +491,7 @@ void _impl_k_thread_abort(k_tid_t thread)
 	__ASSERT(!(thread->base.user_options & K_ESSENTIAL),
 		 "essential thread aborted");
 
-	_k_thread_single_abort(thread);
+	z_k_thread_single_abort(thread);
 	_thread_monitor_exit(thread);
 
 	if (_current == thread) {

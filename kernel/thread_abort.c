@@ -34,7 +34,7 @@ void _impl_k_thread_abort(k_tid_t thread)
 	__ASSERT(!(thread->base.user_options & K_ESSENTIAL),
 		 "essential thread aborted");
 
-	_k_thread_single_abort(thread);
+	z_k_thread_single_abort(thread);
 	_thread_monitor_exit(thread);
 
 	if (_is_in_isr()) {

@@ -470,7 +470,7 @@ void _impl_k_thread_resume(struct k_thread *thread)
 _SYSCALL_HANDLER1_SIMPLE_VOID(k_thread_resume, K_OBJ_THREAD, k_tid_t);
 #endif
 
-void _k_thread_single_abort(struct k_thread *thread)
+void z_k_thread_single_abort(struct k_thread *thread)
 {
 	if (thread->fn_abort != NULL) {
 		thread->fn_abort();
