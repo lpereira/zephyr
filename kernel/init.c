@@ -191,7 +191,7 @@ void z_k_bss_zero(void)
  *
  * @return N/A
  */
-void _data_copy(void)
+void z_k_data_copy(void)
 {
 	memcpy(&__data_ram_start, &__data_rom_start,
 		 ((u32_t) &__data_ram_end - (u32_t) &__data_ram_start));

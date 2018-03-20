@@ -35,7 +35,7 @@ void _PrepC(void)
 {
 	z_k_bss_zero();
 #ifdef CONFIG_XIP
-	_data_copy();
+	z_k_data_copy();
 	/* In most XIP scenarios we copy the exception code into RAM, so need
 	 * to flush instruction cache.
 	 */

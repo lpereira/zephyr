@@ -26,9 +26,9 @@ extern "C" {
 
 void z_k_bss_zero(void);
 #ifdef CONFIG_XIP
-void _data_copy(void);
+void z_k_data_copy(void);
 #else
-static inline void _data_copy(void)
+static inline void z_k_data_copy(void)
 {
 	/* Do nothing */
 }

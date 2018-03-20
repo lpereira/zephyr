@@ -120,7 +120,7 @@ void _PrepC(void)
 	_icache_setup();
 	adjust_vector_table_base();
 	z_k_bss_zero();
-	_data_copy();
+	z_k_data_copy();
 	_Cstart();
 	CODE_UNREACHABLE;
 }

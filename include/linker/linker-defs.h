@@ -202,7 +202,7 @@ extern char __app_bss_start[];
 extern char __app_bss_end[];
 #endif
 
-/* Used by _data_copy() or arch-specific implementation */
+/* Used by z_k_data_copy() or arch-specific implementation */
 #ifdef CONFIG_XIP
 extern char __data_rom_start[];
 extern char __data_ram_start[];

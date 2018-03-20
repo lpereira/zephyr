@@ -33,7 +33,7 @@ void _PrepC(void)
 {
 	z_k_bss_zero();
 #ifdef CONFIG_XIP
-	_data_copy();
+	z_k_data_copy();
 #endif
 	_Cstart();
 	CODE_UNREACHABLE;
