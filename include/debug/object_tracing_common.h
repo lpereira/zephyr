@@ -31,16 +31,14 @@
  * @param name Name of the trace list.
  * @param obj Object to be added in the trace list.
  */
-#define SYS_TRACING_OBJ_INIT(name, obj)		       \
-	do {					       \
-		unsigned int key;		       \
-						       \
-		key = irq_lock();		       \
-		(obj)->__next =  _trace_list_ ## name; \
-		_trace_list_ ## name = obj;	       \
-		irq_unlock(key);		       \
-	}					       \
-	while (0)
+#define SYS_TRACING_OBJ_INIT(name, obj)			 \
+	do {						 \
+		unsigned int key;			 \
+		key = irq_lock();			 \
+		(obj)->__next = z_k_trace_list_ ## name; \
+		z_k_trace_list_ ## name = obj;		 \
+		irq_unlock(key);			 \
+	} while (0)
 
 /**
  * @def SYS_TRACING_OBJ_INIT_DLL
@@ -54,20 +52,18 @@
  * @param name Name of the trace list.
  * @param obj Object to be added in the trace list.
  */
-#define SYS_TRACING_OBJ_INIT_DLL(name, obj)		      \
-	do {						      \
-		unsigned int key;			      \
-							      \
-		key = irq_lock();			      \
-		if (_trace_list_ ## name) {		      \
-			_trace_list_ ## name->__prev = (obj); \
-		}					      \
-		(obj)->__next = _trace_list_ ## name;	      \
-		(obj)->__prev = NULL;			      \
-		_trace_list_ ## name = obj;		      \
-		irq_unlock(key);			      \
-	}						      \
-	while (0)
+#define SYS_TRACING_OBJ_INIT_DLL(name, obj)			 \
+	do {							 \
+		unsigned int key;				 \
+		key = irq_lock();				 \
+		if (z_k_trace_list_ ## name) {			 \
+			z_k_trace_list_ ## name->__prev = (obj); \
+		}						 \
+		(obj)->__next = z_k_trace_list_ ## name;	 \
+		(obj)->__prev = NULL;				 \
+		z_k_trace_list_ ## name = obj;			 \
+		irq_unlock(key);				 \
+	} while (0)
 
 /**
  * @def SYS_TRACING_OBJ_REMOVE_DLL
@@ -80,22 +76,20 @@
  * @param name Name of the trace list.
  * @param obj Object to be removed from the trace list.
  */
-#define SYS_TRACING_OBJ_REMOVE_DLL(name, obj)		      \
-	do {						      \
-		unsigned int key;			      \
-							      \
-		key = irq_lock();			      \
-		if (obj->__next) {			      \
-			obj->__next->__prev = (obj)->__prev;  \
-		}					      \
-		if (obj->__prev) {			      \
-			obj->__prev->__next = (obj)->__next;  \
-		} else {				      \
-			_trace_list_ ## name = (obj)->__next; \
-		}					      \
-		irq_unlock(key);			      \
-	}						      \
-	while (0)
+#define SYS_TRACING_OBJ_REMOVE_DLL(name, obj)			 \
+	do {							 \
+		unsigned int key;				 \
+		key = irq_lock();				 \
+		if (obj->__next) {				 \
+			obj->__next->__prev = (obj)->__prev;	 \
+		}						 \
+		if (obj->__prev) {				 \
+			obj->__prev->__next = (obj)->__next;	 \
+		} else {					 \
+			z_k_trace_list_ ## name = (obj)->__next; \
+		}						 \
+		irq_unlock(key);				 \
+	} while (0)
 
 #endif  /*CONFIG_OBJECT_TRACING*/
 #endif  /*_OBJECT_TRACING_COMMON_H_*/
