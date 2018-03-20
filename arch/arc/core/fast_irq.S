@@ -87,7 +87,7 @@ SECTION_FUNC(TEXT, _firq_enter)
 	bgt.d  firq_nest
 	mov r0, sp
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld sp, [r1, _kernel_offset_to_irq_stack]
 #if CONFIG_RGF_NUM_BANKS != 1
 	b firq_nest_1
@@ -144,7 +144,7 @@ SECTION_FUNC(TEXT, _firq_exit)
 
 #ifdef CONFIG_PREEMPT_ENABLED
 
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	/*
@@ -234,7 +234,7 @@ _firq_reschedule:
 	st ilink, [sp, ___isf_t_pc_OFFSET] /* ilink into pc */
 #endif
 
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	_save_callee_saved_regs

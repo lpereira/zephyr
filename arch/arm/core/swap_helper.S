@@ -25,7 +25,7 @@ GTEXT(_do_kernel_oops)
 GTEXT(_arm_do_syscall)
 GDATA(_k_neg_eagain)
 
-GDATA(_kernel)
+GDATA(z_k_kernel)
 
 /**
  *
@@ -54,8 +54,8 @@ SECTION_FUNC(TEXT, __pendsv)
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH  */
 
-    /* load _kernel into r1 and current k_thread into r2 */
-    ldr r1, =_kernel
+    /* load z_k_kernel into r1 and current k_thread into r2 */
+    ldr r1, =z_k_kernel
     ldr r2, [r1, #_kernel_offset_to_current]
 
     /* addr of callee-saved regs in thread in r0 */
@@ -106,7 +106,7 @@ SECTION_FUNC(TEXT, __pendsv)
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 
-    /* _kernel is still in r1 */
+    /* z_k_kernel is still in r1 */
 
     /* fetch the thread to run from the ready queue cache */
     ldr r2, [r1, _kernel_offset_to_ready_q_cache]

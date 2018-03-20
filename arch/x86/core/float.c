@@ -120,7 +120,7 @@ void k_float_enable(struct tcs *tcs, unsigned int options)
 	 * must be preserved).
 	 */
 
-	fp_owner = _kernel.current_fp;
+	fp_owner = z_k_kernel.current_fp;
 	if (fp_owner) {
 		if (fp_owner->base.thread_state & _INT_OR_EXC_MASK) {
 			_FpCtxSave(fp_owner);
@@ -141,7 +141,7 @@ void k_float_enable(struct tcs *tcs, unsigned int options)
 		 * (The FP context is "live" in hardware, not saved in TCS.)
 		 */
 
-		_kernel.current_fp = tcs;
+		z_k_kernel.current_fp = tcs;
 	} else {
 		/*
 		 * When enabling FP support for someone else, assign ownership
@@ -156,7 +156,7 @@ void k_float_enable(struct tcs *tcs, unsigned int options)
 			 * to its original state.
 			 */
 
-			_kernel.current_fp = tcs;
+			z_k_kernel.current_fp = tcs;
 			_FpAccessDisable();
 		} else {
 			/*
@@ -206,10 +206,10 @@ void k_float_disable(struct tcs *tcs)
 
 	if (tcs == _current) {
 		_FpAccessDisable();
-		_kernel.current_fp = (struct tcs *)0;
+		z_k_kernel.current_fp = (struct tcs *)0;
 	} else {
-		if (_kernel.current_fp == tcs)
-			_kernel.current_fp = (struct tcs *)0;
+		if (z_k_kernel.current_fp == tcs)
+			z_k_kernel.current_fp = (struct tcs *)0;
 	}
 
 	irq_unlock(imask);

@@ -81,7 +81,7 @@ void sys_k_event_logger_put_timed(u16_t event_id)
 #ifdef CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
 void _sys_k_event_logger_context_switch(void)
 {
-	extern struct _kernel _kernel;
+	extern struct _kernel z_k_kernel;
 	u32_t data[2];
 
 	extern void _sys_event_logger_put_non_preemptible(
@@ -101,12 +101,12 @@ void _sys_k_event_logger_context_switch(void)
 		return;
 	}
 
-	if (_collector_coop_thread == _kernel.current) {
+	if (_collector_coop_thread == z_k_kernel.current) {
 		return;
 	}
 
 	data[0] = _sys_k_get_time();
-	data[1] = (u32_t)_kernel.current;
+	data[1] = (u32_t)z_k_kernel.current;
 
 	/*
 	 * The mechanism we use to log the kernel events uses a sync semaphore
@@ -137,7 +137,7 @@ void sys_k_event_logger_register_as_collector(void)
 {
 	ASSERT_CURRENT_IS_COOP_THREAD();
 
-	_collector_coop_thread = _kernel.current;
+	_collector_coop_thread = z_k_kernel.current;
 }
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH */
 
@@ -222,7 +222,7 @@ static void log_thread_event(enum sys_k_event_logger_thread_event event,
 	}
 
 	data[0] = _sys_k_get_time();
-	data[1] = (u32_t)(thread ? thread : _kernel.current);
+	data[1] = (u32_t)(thread ? thread : z_k_kernel.current);
 	data[2] = (u32_t)event;
 
 	sys_k_event_logger_put(KERNEL_EVENT_LOGGER_THREAD_EVENT_ID, data,

@@ -57,7 +57,7 @@ void __attribute__((section(".iram1"))) __start(void)
 	 * initialization code wants a valid _current before
 	 * kernel_arch_init() is invoked.
 	 */
-	__asm__ volatile("wsr.MISC0 %0; rsync" : : "r"(&_kernel.cpus[0]));
+	__asm__ volatile("wsr.MISC0 %0; rsync" : : "r"(&z_k_kernel.cpus[0]));
 
 
 	/* Start Zephyr */

@@ -85,11 +85,11 @@ SECTION_FUNC(exception.entry, _exception)
 is_interrupt:
 	/* If we get here, this is an interrupt */
 
-	/* Grab a reference to _kernel in r10 so we can determine the
+	/* Grab a reference to z_k_kernel in r10 so we can determine the
 	 * current irq stack pointer
 	 */
-	movhi r10, %hi(_kernel)
-	ori r10, r10, %lo(_kernel)
+	movhi r10, %hi(z_k_kernel)
+	ori r10, r10, %lo(z_k_kernel)
 
 	/* Stash a copy of thread's sp in r12 so that we can put it on the IRQ
 	 * stack
@@ -113,9 +113,9 @@ on_irq_stack:
 	/* Interrupt handler finished and the interrupt should be serviced
 	 * now, the appropriate bits in ipending should be cleared */
 
-	/* Get a reference to _kernel again in r10 */
-	movhi r10, %hi(_kernel)
-	ori   r10, r10, %lo(_kernel)
+	/* Get a reference to z_k_kernel again in r10 */
+	movhi r10, %hi(z_k_kernel)
+	ori   r10, r10, %lo(z_k_kernel)
 
 #ifdef CONFIG_PREEMPT_ENABLED
 	ldw   r11, _kernel_offset_to_current(r10)

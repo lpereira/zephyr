@@ -67,7 +67,7 @@ SECTION_FUNC(TEXT, _isr_wrapper)
 	cpsid i  /* PRIMASK = 1 */
 
 	/* is this a wakeup from idle ? */
-	ldr r2, =_kernel
+	ldr r2, =z_k_kernel
 	/* requested idle duration, in ticks */
 	ldr r0, [r2, #_kernel_offset_to_idle]
 	cmp r0, #0

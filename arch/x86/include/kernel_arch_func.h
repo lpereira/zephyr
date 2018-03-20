@@ -34,8 +34,8 @@ extern K_THREAD_STACK_DEFINE(z_k_interrupt_stack, CONFIG_ISR_STACK_SIZE);
  */
 static inline void kernel_arch_init(void)
 {
-	_kernel.nested = 0;
-	_kernel.irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack) +
+	z_k_kernel.nested = 0;
+	z_k_kernel.irq_stack = K_THREAD_STACK_BUFFER(z_k_interrupt_stack) +
 				CONFIG_ISR_STACK_SIZE;
 #if CONFIG_X86_STACK_PROTECTION
 	_x86_mmu_set_flags(z_k_interrupt_stack, MMU_PAGE_SIZE,
@@ -107,7 +107,7 @@ extern FUNC_NORETURN void _x86_userspace_enter(k_thread_entry_t user_entry,
 }
 #endif
 
-#define _is_in_isr() (_kernel.nested != 0)
+#define _is_in_isr() (z_k_kernel.nested != 0)
 
 #endif /* _ASMLANGUAGE */
 

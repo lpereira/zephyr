@@ -68,7 +68,7 @@ extern struct k_pipe     *z_k_trace_list_k_pipe;
  * @details Access the head element of the thread monitor list.
  *
  */
-#define SYS_THREAD_MONITOR_HEAD ((struct k_thread *)(_kernel.threads))
+#define SYS_THREAD_MONITOR_HEAD ((struct k_thread *)(z_k_kernel.threads))
 
 /**
  * @def SYS_THREAD_MONITOR_NEXT

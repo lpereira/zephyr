@@ -66,7 +66,7 @@ static void appcpu_entry2(void)
 	/* Set up the CPU pointer.  Really this should be xtensa arch
 	 * code, not in the ESP-32 layer
 	 */
-	_cpu_t *cpu = &_kernel.cpus[1];
+	_cpu_t *cpu = &z_k_kernel.cpus[1];
 
 	__asm__ volatile("wsr.MISC0 %0" : : "r"(cpu));
 

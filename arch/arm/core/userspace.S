@@ -18,7 +18,7 @@ _ASM_FILE_PROLOGUE
 
 GTEXT(_arm_userspace_enter)
 GTEXT(_arm_do_syscall)
-GDATA(_kernel)
+GDATA(z_k_kernel)
 
 /* Imports */
 GTEXT(_k_syscall_table)
@@ -37,7 +37,7 @@ SECTION_FUNC(TEXT,_arm_userspace_enter)
     mov lr, r0
 
     /* set stack to priviliged stack */
-    ldr r0, =_kernel
+    ldr r0, =z_k_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
     ldr r0, [r0, #_thread_offset_to_priv_stack_start]    /* priv stack ptr */
     ldr ip, =CONFIG_PRIVILEGED_STACK_SIZE
@@ -69,12 +69,12 @@ SECTION_FUNC(TEXT,_arm_userspace_enter)
     bl memset
 
     /* setup arguments to configure_mpu_mem_domain */
-    ldr r0, =_kernel
+    ldr r0, =z_k_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
     bl configure_mpu_mem_domain
 
     /* setup arguments configure_mpu_user_context */
-    ldr r0, =_kernel
+    ldr r0, =z_k_kernel
     ldr r0, [r0, #_kernel_offset_to_current]
     bl configure_mpu_user_context
 
@@ -138,7 +138,7 @@ SECTION_FUNC(TEXT, _arm_do_syscall)
 
 valid_syscall:
     /* setup priviliged stack */
-    ldr r4, =_kernel
+    ldr r4, =z_k_kernel
     ldr r4, [r4, #_kernel_offset_to_current]
     ldr r5, [r4, #_thread_offset_to_priv_stack_start]    /* priv stack ptr */
     ldr r6, =CONFIG_PRIVILEGED_STACK_SIZE

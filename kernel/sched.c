@@ -14,7 +14,7 @@
 #include <kswap.h>
 
 /* the only struct _kernel instance */
-struct _kernel _kernel = {0};
+struct _kernel z_k_kernel = {0};
 
 /* set the bit corresponding to prio in ready q bitmap */
 #if defined(CONFIG_MULTITHREADING) && !defined(CONFIG_SMP)
@@ -526,8 +526,8 @@ int _get_highest_ready_prio(void)
 {
 	int p;
 
-	for (p = 0; p < ARRAY_SIZE(_kernel.ready_q.q); p++) {
-		if (!sys_dlist_is_empty(&_kernel.ready_q.q[p])) {
+	for (p = 0; p < ARRAY_SIZE(z_k_kernel.ready_q.q); p++) {
+		if (!sys_dlist_is_empty(&z_k_kernel.ready_q.q[p])) {
 			break;
 		}
 	}

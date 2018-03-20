@@ -41,7 +41,7 @@ void *__attribute__((section(".spurNoErrIsr")))
 /* FIXME: IRQ direct inline functions have to be placed here and not in
  * arch/cpu.h as inline functions due to nasty circular dependency between
  * arch/cpu.h and kernel_structs.h; the inline functions typically need to
- * perform operations on _kernel.  For now, leave as regular functions, a
+ * perform operations on z_k_kernel.  For now, leave as regular functions, a
  * future iteration will resolve this.
  * We have a similar issue with the k_event_logger functions.
  *
@@ -51,10 +51,10 @@ void *__attribute__((section(".spurNoErrIsr")))
 #ifdef CONFIG_SYS_POWER_MANAGEMENT
 void _arch_irq_direct_pm(void)
 {
-	if (_kernel.idle) {
-		s32_t idle_val = _kernel.idle;
+	if (z_k_kernel.idle) {
+		s32_t idle_val = z_k_kernel.idle;
 
-		_kernel.idle = 0;
+		z_k_kernel.idle = 0;
 		_sys_power_save_idle_exit(idle_val);
 	}
 }
@@ -69,14 +69,14 @@ void _arch_isr_direct_header(void)
 	/* We're not going to unlock IRQs, but we still need to increment this
 	 * so that _is_in_isr() works
 	 */
-	++_kernel.nested;
+	++z_k_kernel.nested;
 }
 
 void _arch_isr_direct_footer(int swap)
 {
 	_irq_controller_eoi();
 	_int_latency_stop();
-	--_kernel.nested;
+	--z_k_kernel.nested;
 
 	/* Call swap if all the following is true:
 	 *
@@ -85,9 +85,9 @@ void _arch_isr_direct_footer(int swap)
 	 * 3) Current thread is preemptible
 	 * 4) Next thread to run in the ready queue is not this thread
 	 */
-	if (swap && !_kernel.nested &&
+	if (swap && !z_k_kernel.nested &&
 	    _current->base.preempt < _NON_PREEMPT_THRESHOLD &&
-	    _kernel.ready_q.cache != _current) {
+	    z_k_kernel.ready_q.cache != _current) {
 		unsigned int flags;
 
 		/* Fetch EFLAGS argument to _Swap() */

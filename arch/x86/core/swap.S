@@ -120,7 +120,7 @@ SECTION_FUNC(TEXT, __swap)
 
 	pushl	%edi
 
-	movl	$_kernel, %edi
+	movl	$z_k_kernel, %edi
 
 	pushl	%esi
 	pushl	%ebx
@@ -151,7 +151,7 @@ SECTION_FUNC(TEXT, __swap)
 
 	/*
 	 * At this point, the %eax register contains the 'k_thread *' of the
-	 * thread to be swapped in, and %edi still contains &_kernel. %edx
+	 * thread to be swapped in, and %edi still contains &z_k_kernel. %edx
 	 * has the pointer to the outgoing thread.
 	 */
 #ifdef CONFIG_X86_USERSPACE
@@ -327,7 +327,7 @@ CROHandlingDone:
 
 #endif /* CONFIG_FP_SHARING */
 
-	/* update _kernel.current to reflect incoming thread */
+	/* update z_k_kernel.current to reflect incoming thread */
 
 	movl    %eax, _kernel_offset_to_current(%edi)
 

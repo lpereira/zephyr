@@ -138,7 +138,7 @@
  * level -- interrupt level
  * mask  -- interrupt bitmask for this level
  */
-    .extern _kernel
+    .extern z_k_kernel
     .extern _sys_power_save_idle_exit
 
     .macro  dispatch_c_isr    level  mask
@@ -207,7 +207,7 @@
     #endif
 
 #ifdef CONFIG_SYS_POWER_MANAGEMENT
-    movi    a3, _kernel
+    movi    a3, z_k_kernel
 #ifdef __XTENSA_CALL0_ABI__
     mov     a12, a2
     l32i    a2, a3, _kernel_offset_to_idle

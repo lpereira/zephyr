@@ -9,15 +9,15 @@
 #include <kernel_structs.h>
 
 	.extern z_k_interrupt_stack
-	.extern _kernel
+	.extern z_k_kernel
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 	.extern _timer_int_handler
 #endif
 	.set z_k_interrupt_stack_top, z_k_interrupt_stack+CONFIG_ISR_STACK_SIZE
 
 /*
- * _zxt_dispatch(_kernel_t *_kernel, _thread_t *_thread)
- * At this point, the a2 register contains the '&_kernel' and the
+ * _zxt_dispatch(_kernel_t *z_k_kernel, _thread_t *_thread)
+ * At this point, the a2 register contains the '&z_k_kernel' and the
  * thread to be swapped in (&_thread) is in a3.
  */
 	.text
@@ -25,8 +25,10 @@
 	.type   _zxt_dispatch,@function
 	.align  4
 _zxt_dispatch:
-	/* Updated current thread: _kernel.current := _kernel.ready_q.cache */
-	s32i a3, a2, KERNEL_OFFSET(current) /* _kernel.current := _thread */
+	/* Updated current thread:
+	 * z_k_kernel.current := z_k_kernel.ready_q.cache
+	 */
+	s32i a3, a2, KERNEL_OFFSET(current) /* z_k_kernel.current := _thread */
 	l32i sp, a3, THREAD_OFFSET(sp) /* sp := _thread->topOfStack; */
 
 	/* Determine the type of stack frame. */
@@ -135,13 +137,13 @@ _zxt_int_enter:
 	 * windowed ABI we can't call a C function here anyway because PS.EXCM
 	 * is still set).
 	 */
-	movi a2, _kernel                   /* a2 := _kernel */
-	l32i a3, a2, KERNEL_OFFSET(nested) /* a3 := _kernel->nested */
+	movi a2, z_k_kernel                   /* a2 := z_k_kernel */
+	l32i a3, a2, KERNEL_OFFSET(nested) /* a3 := z_k_kernel->nested */
 	addi a3, a3, 1                     /* increment nesting count */
 	s32i a3, a2, KERNEL_OFFSET(nested) /* save nesting count */
 	bnei a3, 1, .Lnested               /* !=0 before incr, so nested */
 
-	l32i a3, a2, KERNEL_OFFSET(current)/* a3 := _kernel->current */
+	l32i a3, a2, KERNEL_OFFSET(current)/* a3 := z_k_kernel->current */
 	s32i a1, a3, THREAD_OFFSET(sp)     /* save SP to Current top of stack */
 	movi a1, z_k_interrupt_stack_top   /* a1 = top of intr stack */
 .Lnested:
@@ -167,8 +169,8 @@ _zxt_int_enter:
 _zxt_int_exit:
 
 	rsil a0, XCHAL_EXCM_LEVEL       	/* lock out interrupts */
-	movi a2, _kernel
-	l32i a3, a2, KERNEL_OFFSET(nested)	/* _kernel->nested */
+	movi a2, z_k_kernel
+	l32i a3, a2, KERNEL_OFFSET(nested)	/* z_k_kernel->nested */
 	addi a3, a3, -1				/* decrement nesting count */
 	s32i a3, a2, KERNEL_OFFSET(nested)	/* save nesting count */
 	bnez a3, .Lnesting		/* !=0 after decr so still nested  */
@@ -184,13 +186,13 @@ _zxt_int_exit:
 #endif
 
 #if XCHAL_CP_NUM > 0
-	l32i a3, a2, KERNEL_OFFSET(current) /* _thread := _kernel->current */
+	l32i a3, a2, KERNEL_OFFSET(current) /* _thread := z_k_kernel->current */
 	rsr a5, CPENABLE
 	s16i a5, a3, THREAD_OFFSET(cpEnable) /* cp_state->cpenable = CPENABLE */
 	movi a3, 0
 	wsr a3, CPENABLE                /* disable all co-processors */
 #endif
-	l32i a3, a2, KERNEL_OFFSET(current) /*  _thread := _kernel.current */
+	l32i a3, a2, KERNEL_OFFSET(current) /*  _thread := z_k_kernel.current */
 	/*
 	 * Non-preemptible thread ? Do not schedule (see explanation of
 	 * preempt field in kernel_struct.h).
@@ -198,13 +200,13 @@ _zxt_int_exit:
 	movi a4, _NON_PREEMPT_THRESHOLD
 	l16ui a5, a3, THREAD_OFFSET(preempt)
 	bgeu a5, a4, .noReschedule
-	/* _thread := _kernel.ready_q.cache */
+	/* _thread := z_k_kernel.ready_q.cache */
 	l32i a3, a2, KERNEL_OFFSET(ready_q_cache)
 .noReschedule:
 	/*
 	 * Swap threads if any is to be swapped in.
 	 */
-	call0   _zxt_dispatch /* (_kernel@a2, _thread@a3) */
+	call0   _zxt_dispatch /* (z_k_kernel@a2, _thread@a3) */
 	/* Never returns here. */
 
 .Lnesting:
@@ -379,7 +381,7 @@ _zxt_tick_timer_init:
 	.type   _zxt_task_coproc_state,@function
 	.align  4
 _zxt_task_coproc_state:
-	movi a2, _kernel
+	movi a2, z_k_kernel
 	l32i a15, a2, KERNEL_OFFSET(nested)
 	bnez a15, 1f
 	l32i a2, a2, KERNEL_OFFSET(current)

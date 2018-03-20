@@ -80,11 +80,11 @@ void posix_irq_handler(void)
 		return;
 	}
 
-	if (_kernel.nested == 0) {
+	if (z_k_kernel.nested == 0) {
 		may_swap = 0;
 	}
 
-	_kernel.nested++;
+	z_k_kernel.nested++;
 
 	_sys_k_event_logger_exit_sleep();
 
@@ -102,7 +102,7 @@ void posix_irq_handler(void)
 		hw_irq_ctrl_set_cur_prio(last_current_running_prio);
 	}
 
-	_kernel.nested--;
+	z_k_kernel.nested--;
 
 	/* Call swap if all the following is true:
 	 * 1) may_swap was enabled
@@ -113,7 +113,7 @@ void posix_irq_handler(void)
 	if (may_swap
 		&& (hw_irq_ctrl_get_cur_prio() == 256)
 		&& (_current->base.preempt < _NON_PREEMPT_THRESHOLD)
-		&& (_kernel.ready_q.cache != _current)) {
+		&& (z_k_kernel.ready_q.cache != _current)) {
 
 		_Swap(irq_lock);
 	}
@@ -300,7 +300,7 @@ void posix_sw_clear_pending_IRQ(unsigned int IRQn)
  */
 void irq_offload(irq_offload_routine_t routine, void *parameter)
 {
-	_kernel.nested++;
+	z_k_kernel.nested++;
 	routine(parameter);
-	_kernel.nested--;
+	z_k_kernel.nested--;
 }

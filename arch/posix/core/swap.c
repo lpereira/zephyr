@@ -36,8 +36,8 @@
 unsigned int __swap(unsigned int key)
 {
 /*
- * struct k_thread * _kernel.current is the currently runnig thread
- * struct k_thread * _kernel.ready_q.cache contains the next thread to run
+ * struct k_thread * z_k_kernel.current is the currently runnig thread
+ * struct k_thread * z_k_kernel.ready_q.cache contains the next thread to run
  * (cannot be NULL)
  *
  * Here a "real" arch would save all processor registers, stack pointer and so
@@ -45,8 +45,8 @@ unsigned int __swap(unsigned int key)
  * But we do not need to do so because we use posix threads => those are all
  * nicely kept by the native OS kernel
  */
-	_kernel.current->callee_saved.key = key;
-	_kernel.current->callee_saved.retval = -EAGAIN;
+	z_k_kernel.current->callee_saved.key = key;
+	z_k_kernel.current->callee_saved.retval = -EAGAIN;
 	/* retval may be modified with a call to _set_thread_return_value() */
 
 #if CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
@@ -55,14 +55,14 @@ unsigned int __swap(unsigned int key)
 
 	posix_thread_status_t *ready_thread_ptr =
 		(posix_thread_status_t *)
-		_kernel.ready_q.cache->callee_saved.thread_status;
+		z_k_kernel.ready_q.cache->callee_saved.thread_status;
 
 	posix_thread_status_t *this_thread_ptr  =
 		(posix_thread_status_t *)
-		_kernel.current->callee_saved.thread_status;
+		z_k_kernel.current->callee_saved.thread_status;
 
 
-	_kernel.current = _kernel.ready_q.cache;
+	z_k_kernel.current = z_k_kernel.ready_q.cache;
 
 	/*
 	 * Here a "real" arch would load all processor registers for the thread
@@ -72,11 +72,11 @@ unsigned int __swap(unsigned int key)
 	posix_swap(ready_thread_ptr->thread_idx,
 		this_thread_ptr->thread_idx);
 
-	/* When we continue, _kernel->current points back to this thread */
+	/* When we continue, z_k_kernel->current points back to this thread */
 
-	irq_unlock(_kernel.current->callee_saved.key);
+	irq_unlock(z_k_kernel.current->callee_saved.key);
 
-	return _kernel.current->callee_saved.retval;
+	return z_k_kernel.current->callee_saved.retval;
 }
 
 
@@ -95,8 +95,8 @@ void _arch_switch_to_main_thread(struct k_thread *main_thread,
 {
 	posix_thread_status_t *ready_thread_ptr =
 			(posix_thread_status_t *)
-			_kernel.ready_q.cache->callee_saved.thread_status;
-	_kernel.current = _kernel.ready_q.cache;
+			z_k_kernel.ready_q.cache->callee_saved.thread_status;
+	z_k_kernel.current = z_k_kernel.ready_q.cache;
 
 	posix_main_thread_start(ready_thread_ptr->thread_idx);
 } /* LCOV_EXCL_LINE */
@@ -108,10 +108,10 @@ void _arch_switch_to_main_thread(struct k_thread *main_thread,
  */
 void posix_irq_check_idle_exit(void)
 {
-	if (_kernel.idle) {
-		s32_t idle_val = _kernel.idle;
+	if (z_k_kernel.idle) {
+		s32_t idle_val = z_k_kernel.idle;
 
-		_kernel.idle = 0;
+		z_k_kernel.idle = 0;
 		_sys_power_save_idle_exit(idle_val);
 	}
 }

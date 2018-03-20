@@ -23,7 +23,7 @@ _ASM_FILE_PROLOGUE
 
 GTEXT(_ExcExit)
 GTEXT(_IntExit)
-GDATA(_kernel)
+GDATA(z_k_kernel)
 #ifdef CONFIG_TIMESLICING
 GTEXT(_update_time_slice_before_swap)
 #endif
@@ -71,7 +71,7 @@ SECTION_SUBSEC_FUNC(TEXT, _HandlerModeExit, _IntExit)
 SECTION_SUBSEC_FUNC(TEXT, _HandlerModeExit, _ExcExit)
 
 #ifdef CONFIG_PREEMPT_ENABLED
-    ldr r0, =_kernel
+    ldr r0, =z_k_kernel
 
     ldr r1, [r0, #_kernel_offset_to_current]
 

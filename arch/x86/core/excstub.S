@@ -112,7 +112,7 @@ SECTION_FUNC(TEXT, _exception_enter)
 
 #if defined(CONFIG_FP_SHARING)
 
-	movl	_kernel + _kernel_offset_to_current, %edx
+	movl	z_k_kernel + _kernel_offset_to_current, %edx
 
 	/* inc exception nest count */
 	incl	_thread_offset_to_excNestCount(%edx)
@@ -159,7 +159,7 @@ allDone:
 
 #if defined(CONFIG_FP_SHARING)
 
-	movl	_kernel + _kernel_offset_to_current, %ecx
+	movl	z_k_kernel + _kernel_offset_to_current, %ecx
 
 	/*
 	 * Must lock interrupts to prevent outside interference.

@@ -23,7 +23,7 @@
 
 GTEXT(__swap)
 GDATA(_k_neg_eagain)
-GDATA(_kernel)
+GDATA(z_k_kernel)
 
 /**
  *
@@ -63,7 +63,7 @@ SECTION_FUNC(TEXT, __swap)
 
 	/* interrupts are locked, interrupt key is in r0 */
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	/* save intlock key */

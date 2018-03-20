@@ -49,7 +49,7 @@
  *
  * This function is called from the interrupt stub created by IRQ_CONNECT()
  * to inform the kernel of an interrupt.  This routine increments
- * _kernel.nested (to support interrupt nesting), switches to the
+ * z_k_kernel.nested (to support interrupt nesting), switches to the
  * base of the interrupt stack, if not already on the interrupt stack, and then
  * saves the volatile integer registers onto the stack.  Finally, control is
  * returned back to the interrupt stub code (which will then invoke the
@@ -165,9 +165,9 @@ SECTION_FUNC(TEXT, _interrupt_enter)
 	popl	%eax
 #endif
 
-	/* load %ecx with &_kernel */
+	/* load %ecx with &z_k_kernel */
 
-	movl	$_kernel, %ecx
+	movl	$z_k_kernel, %ecx
 
 	/* switch to the interrupt stack for the non-nested case */
 
@@ -247,7 +247,7 @@ alreadyOnIntStack:
 #endif
 
 	/* determine whether exiting from a nested interrupt */
-	movl	$_kernel, %ecx
+	movl	$z_k_kernel, %ecx
 	decl	_kernel_offset_to_nested(%ecx)	/* dec interrupt nest count */
 	jne	nestedInterrupt                 /* 'iret' if nested case */
 
@@ -320,7 +320,7 @@ alreadyOnIntStack:
 	 * since it has served its purpose.
 	 */
 
-	movl	_kernel + _kernel_offset_to_current, %eax
+	movl	z_k_kernel + _kernel_offset_to_current, %eax
 	andb	$~_INT_ACTIVE, _thread_offset_to_thread_state(%eax)
 #endif /* CONFIG_FP_SHARING */
 
@@ -384,7 +384,7 @@ handle_idle:
 	/* SYS V calling convention */
 	push	_kernel_offset_to_idle(%ecx)
 #endif
-	/* Zero out _kernel.idle */
+	/* Zero out z_k_kernel.idle */
 	movl	$0, _kernel_offset_to_idle(%ecx)
 
 	/*

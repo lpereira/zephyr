@@ -243,8 +243,8 @@ static ALWAYS_INLINE void thread_monitor_init(struct k_thread *thread)
 	unsigned int key;
 
 	key = irq_lock();
-	thread->next_thread = _kernel.threads;
-	_kernel.threads = thread;
+	thread->next_thread = z_k_kernel.threads;
+	z_k_kernel.threads = thread;
 	irq_unlock(key);
 }
 #else

@@ -37,7 +37,7 @@ static ALWAYS_INLINE _cpu_t *_arch_curr_cpu(void)
 
 	return val;
 #else
-	return &_kernel.cpus[0];
+	return &z_k_kernel.cpus[0];
 #endif
 }
 
@@ -53,7 +53,7 @@ static ALWAYS_INLINE _cpu_t *_arch_curr_cpu(void)
  */
 static ALWAYS_INLINE void kernel_arch_init(void)
 {
-	_cpu_t *cpu0 = &_kernel.cpus[0];
+	_cpu_t *cpu0 = &z_k_kernel.cpus[0];
 
 	cpu0->nested = 0;
 

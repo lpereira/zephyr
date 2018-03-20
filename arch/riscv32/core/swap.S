@@ -34,9 +34,9 @@ SECTION_FUNC(exception.other, __swap)
 	 * _thread_offset_to_swap_return_value). Normally, it should be -EAGAIN,
 	 * unless someone has previously called _set_thread_return_value(..).
 	 */
-	la t0, _kernel
+	la t0, z_k_kernel
 
-	/* Get pointer to _kernel.current */
+	/* Get pointer to z_k_kernel.current */
 	lw t1, _kernel_offset_to_current(t0)
 
 	/* Load return value of __swap function in temp register t2 */

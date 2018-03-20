@@ -40,7 +40,7 @@ restore:
 	j @_sys_soc_restore_cpu_context
 
 SECTION_FUNC(TEXT, save_cpu_context)
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	_save_callee_saved_regs
@@ -115,7 +115,7 @@ SECTION_FUNC(TEXT, _power_soc_deep_sleep_2)
 	j_s [blink]
 
 SECTION_FUNC(TEXT, _sys_soc_restore_cpu_context)
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	_load_callee_saved_regs

@@ -67,7 +67,7 @@ SECTION_FUNC(TEXT, _rirq_enter)
 	bgt.d  rirq_nest
 	mov r0, sp
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld sp, [r1, _kernel_offset_to_irq_stack]
 rirq_nest:
 	push_s r0
@@ -97,7 +97,7 @@ SECTION_FUNC(TEXT, _rirq_exit)
 
 #ifdef CONFIG_PREEMPT_ENABLED
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 
 	/*

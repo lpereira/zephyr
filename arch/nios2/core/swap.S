@@ -22,9 +22,9 @@ GTEXT(_k_neg_eagain)
  */
 SECTION_FUNC(exception.other, __swap)
 
-	/* Get a reference to _kernel in r10 */
-	movhi r10, %hi(_kernel)
-	ori   r10, r10, %lo(_kernel)
+	/* Get a reference to z_k_kernel in r10 */
+	movhi r10, %hi(z_k_kernel)
+	ori   r10, r10, %lo(z_k_kernel)
 
 	/* Get the pointer to kernel->current */
 	ldw  r11, _kernel_offset_to_current(r10)
@@ -60,8 +60,8 @@ SECTION_FUNC(exception.other, __swap)
 #if CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
 	call _sys_k_event_logger_context_switch
 	/* restore caller-saved r10 */
-	movhi r10, %hi(_kernel)
-	ori   r10, r10, %lo(_kernel)
+	movhi r10, %hi(z_k_kernel)
+	ori   r10, r10, %lo(z_k_kernel)
 #endif
 
 	/* get cached thread to run */

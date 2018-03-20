@@ -63,7 +63,7 @@ static inline void _IntLibInit(void)
 }
 #endif
 
-#define _is_in_isr() (_kernel.nested != 0)
+#define _is_in_isr() (z_k_kernel.nested != 0)
 
 #endif /* _ASMLANGUAGE */
 

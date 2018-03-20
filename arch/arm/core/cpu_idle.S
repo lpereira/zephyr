@@ -71,7 +71,7 @@ SECTION_FUNC(TEXT, _CpuIdleInit)
  */
 
 SECTION_FUNC(TEXT, _NanoIdleValGet)
-	ldr r0, =_kernel
+	ldr r0, =z_k_kernel
 	ldr r0, [r0, #_kernel_offset_to_idle]
 	bx lr
 
@@ -89,7 +89,7 @@ SECTION_FUNC(TEXT, _NanoIdleValGet)
  */
 
 SECTION_FUNC(TEXT, _NanoIdleValClear)
-	ldr r0, =_kernel
+	ldr r0, =z_k_kernel
 	eors.n r1, r1
 	str r1, [r0, #_kernel_offset_to_idle]
 	bx lr

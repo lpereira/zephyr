@@ -133,12 +133,12 @@ void _thread_monitor_exit(struct k_thread *thread)
 {
 	unsigned int key = irq_lock();
 
-	if (thread == _kernel.threads) {
-		_kernel.threads = _kernel.threads->next_thread;
+	if (thread == z_k_kernel.threads) {
+		z_k_kernel.threads = z_k_kernel.threads->next_thread;
 	} else {
 		struct k_thread *prev_thread;
 
-		prev_thread = _kernel.threads;
+		prev_thread = z_k_kernel.threads;
 		while (prev_thread != NULL &&
 		       thread != prev_thread->next_thread) {
 			prev_thread = prev_thread->next_thread;

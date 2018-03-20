@@ -57,7 +57,7 @@ void __attribute__((weak)) _sys_soc_resume_from_deep_sleep(void)
  */
 static void set_kernel_idle_time_in_ticks(s32_t ticks)
 {
-	_kernel.idle = ticks;
+	z_k_kernel.idle = ticks;
 }
 #else
 #define set_kernel_idle_time_in_ticks(x) do { } while (0)

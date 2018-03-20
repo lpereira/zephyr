@@ -198,7 +198,7 @@ is_interrupt:
 	addi t0, sp, 0
 
 	/* Switch to interrupt stack */
-	la t2, _kernel
+	la t2, z_k_kernel
 	lw sp, _kernel_offset_to_irq_stack(t2)
 
 	/*
@@ -209,7 +209,7 @@ is_interrupt:
 	sw t0, 0x00(sp)
 
 on_irq_stack:
-	/* Increment _kernel.nested variable */
+	/* Increment z_k_kernel.nested variable */
 	lw t3, _kernel_offset_to_nested(t2)
 	addi t3, t3, 1
 	sw t3, _kernel_offset_to_nested(t2)
@@ -266,8 +266,8 @@ call_irq:
 	jalr ra, t1
 
 on_thread_stack:
-	/* Get reference to _kernel */
-	la t1, _kernel
+	/* Get reference to z_k_kernel */
+	la t1, z_k_kernel
 
 	/* Decrement _kernel.nested variable */
 	lw t2, _kernel_offset_to_nested(t1)
@@ -280,7 +280,7 @@ on_thread_stack:
 
 #ifdef CONFIG_STACK_SENTINEL
 	call _check_stack_sentinel
-	la t1, _kernel
+	la t1, z_k_kernel
 #endif
 
 #ifdef CONFIG_PREEMPT_ENABLED
@@ -288,7 +288,7 @@ on_thread_stack:
 	 * Check if we need to perform a reschedule
 	 */
 
-	/* Get pointer to _kernel.current */
+	/* Get pointer to z_k_kernel.current */
 	lw t2, _kernel_offset_to_current(t1)
 
 	/*
@@ -316,10 +316,10 @@ reschedule:
 #if CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH
 	call _sys_k_event_logger_context_switch
 #endif /* CONFIG_KERNEL_EVENT_LOGGER_CONTEXT_SWITCH */
-	/* Get reference to _kernel */
-	la t0, _kernel
+	/* Get reference to z_k_kernel */
+	la t0, z_k_kernel
 
-	/* Get pointer to _kernel.current */
+	/* Get pointer to z_k_kernel.current */
 	lw t1, _kernel_offset_to_current(t0)
 
 	/*
@@ -352,7 +352,7 @@ reschedule:
 	lw t1, _kernel_offset_to_ready_q_cache(t0)
 
 	/*
-	 * Set _kernel.current to new thread loaded in t1
+	 * Set z_k_kernel.current to new thread loaded in t1
 	 */
 	sw t1, _kernel_offset_to_current(t0)
 

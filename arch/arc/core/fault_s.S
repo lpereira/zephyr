@@ -88,7 +88,7 @@ SECTION_SUBSEC_FUNC(TEXT,__fault,__ev_maligned)
 	bgt.d  exc_nest_handle
 	mov r0, sp
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld sp, [r1, _kernel_offset_to_irq_stack]
 exc_nest_handle:
 	push_s r0
@@ -177,7 +177,7 @@ _do_other_trap:
 	bgt.d  trap_nest_handle
 	mov r0, sp
 
-	mov r1, _kernel
+	mov r1, z_k_kernel
 	ld sp, [r1, _kernel_offset_to_irq_stack]
 trap_nest_handle:
 	push_s r0
@@ -204,7 +204,7 @@ _trap_return:
 
 .balign 4
 _trap_check_for_swap:
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r2, [r1, _kernel_offset_to_current]
 	/*
 	 * Non-preemptible thread ? Do not schedule (see explanation of

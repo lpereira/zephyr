@@ -136,7 +136,7 @@ void _irq_spurious(void *unused)
 /* FIXME: IRQ direct inline functions have to be placed here and not in
  * arch/cpu.h as inline functions due to nasty circular dependency between
  * arch/cpu.h and kernel_structs.h; the inline functions typically need to
- * perform operations on _kernel.  For now, leave as regular functions, a
+ * perform operations on z_k_kernel.  For now, leave as regular functions, a
  * future iteration will resolve this.
  * We have a similar issue with the k_event_logger functions.
  *
@@ -161,10 +161,10 @@ void _arch_isr_direct_pm(void)
 #error Unknown ARM architecture
 #endif /* CONFIG_ARMV6_M_ARMV8_M_BASELINE */
 
-	if (_kernel.idle) {
-		s32_t idle_val = _kernel.idle;
+	if (z_k_kernel.idle) {
+		s32_t idle_val = z_k_kernel.idle;
 
-		_kernel.idle = 0;
+		z_k_kernel.idle = 0;
 		_sys_power_save_idle_exit(idle_val);
 	}
 

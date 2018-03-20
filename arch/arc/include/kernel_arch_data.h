@@ -168,7 +168,7 @@ struct _kernel_arch {
 
 	/*
 	 * FIRQ stack pointer is installed once in the second bank's SP, so
-	 * there is no need to track it in _kernel.
+	 * there is no need to track it in z_k_kernel.
 	 */
 
 };

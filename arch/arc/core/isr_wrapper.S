@@ -88,12 +88,12 @@ Registers not taken into account in the current implementation.
 
 The context switch code adopts this standard so that it is easier to follow:
 
-  - r1 contains _kernel ASAP and is not overwritten over the lifespan of
+  - r1 contains z_k_kernel ASAP and is not overwritten over the lifespan of
     the functions.
-  - r2 contains _kernel.current ASAP, and the incoming thread when we
+  - r2 contains z_k_kernel.current ASAP, and the incoming thread when we
     transition from outgoing thread to incoming thread
 
-Not loading _kernel into r0 allows loading _kernel without stomping on
+Not loading z_k_kernel into r0 allows loading z_k_kernel without stomping on
 the parameter in r0 in _Swap().
 
 
@@ -329,7 +329,7 @@ GTEXT(_sys_k_event_logger_interrupt)
 	clri r0 /* do not interrupt exiting tickless idle operations */
 	push_s r1
 	push_s r0
-	mov_s r1, _kernel
+	mov_s r1, z_k_kernel
 	ld_s r0, [r1, _kernel_offset_to_idle] /* requested idle duration */
 	breq r0, 0, _skip_sys_power_save_idle_exit
 

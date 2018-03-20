@@ -14,7 +14,7 @@
 #include <kernel_arch_data.h>
 #include <offsets_short.h>
 
-	.extern _kernel
+	.extern z_k_kernel
 /* unsigned int __swap (unsigned int basepri); */
 	.globl  __swap
 	.type   __swap,@function
@@ -54,9 +54,9 @@ __swap:
 	 */
 	call0   _xt_coproc_savecs
 #endif
-	movi a2, _kernel
+	movi a2, z_k_kernel
 	movi a3,  0
-	l32i a4, a2, KERNEL_OFFSET(current) /* a4 := _kernel->current */
+	l32i a4, a2, KERNEL_OFFSET(current) /* a4 := z_k_kernel->current */
 
 	s32i a3,  sp, XT_SOL_exit       /* 0 to flag as solicited frame */
 	s32i sp,  a4, THREAD_OFFSET(sp) /* current->arch.topOfStack := sp */
@@ -70,7 +70,7 @@ __swap:
 #if XCHAL_CP_NUM > 0
 	/* Clear CPENABLE, also in task's co-processor state save area. */
 	movi    a3,  0
-	/* a4 = _kernel->current */
+	/* a4 = z_k_kernel->current */
 	wsr     a3,  CPENABLE
 	s16i    a3,  a4, THREAD_OFFSET(cpEnable) /* clear saved cpenable */
 #endif
@@ -83,11 +83,11 @@ __swap:
 	call4 _sys_k_event_logger_context_switch
 #endif
 #endif
-	/* _thread := _kernel.ready_q.cache */
+	/* _thread := z_k_kernel.ready_q.cache */
 	l32i a3, a2, KERNEL_OFFSET(ready_q_cache)
 	/*
 	 * Swap threads if any is to be swapped in.
 	 */
-	call0   _zxt_dispatch /* (_kernel@a2, _thread@a3) */
+	call0   _zxt_dispatch /* (z_k_kernel@a2, _thread@a3) */
 	/* Never reaches here. */
 

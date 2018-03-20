@@ -66,7 +66,7 @@ SECTION_FUNC(TEXT, _user_thread_entry_wrapper)
 	add blink, r5, CONFIG_PRIVILEGED_STACK_SIZE+16
 
 	/* r4<- start  of user stack region */
-	mov r0, _kernel
+	mov r0, z_k_kernel
 	ld_s r1, [r0, _kernel_offset_to_current]
 	ld r4, [r1, ___thread_stack_info_t_start_OFFSET]
 

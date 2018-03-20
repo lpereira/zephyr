@@ -72,7 +72,7 @@ void _enter_irq(u32_t ipending)
 {
 	int index;
 
-	_kernel.nested++;
+	z_k_kernel.nested++;
 
 #ifdef CONFIG_IRQ_OFFLOAD
 	_irq_do_offload();
@@ -92,7 +92,7 @@ void _enter_irq(u32_t ipending)
 		ite->isr(ite->arg);
 	}
 
-	_kernel.nested--;
+	z_k_kernel.nested--;
 #ifdef CONFIG_STACK_SENTINEL
 	_check_stack_sentinel();
 #endif
