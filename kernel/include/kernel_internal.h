@@ -64,7 +64,7 @@ extern void _setup_new_thread(struct k_thread *new_thread,
  *
  * @return Max number of free regions, or -1 if there is no limit
  */
-extern int _arch_mem_domain_max_partitions_get(void);
+extern int z_arch_mem_domain_max_partitions_get(void);
 
 /**
  * @brief Configure the memory domain of the thread.
@@ -76,7 +76,7 @@ extern int _arch_mem_domain_max_partitions_get(void);
  *
  * @param thread Thread which needs to be configured.
  */
-extern void _arch_mem_domain_configure(struct k_thread *thread);
+extern void z_arch_mem_domain_configure(struct k_thread *thread);
 
 /**
  * @brief Remove a partition from the memory domain
@@ -88,8 +88,8 @@ extern void _arch_mem_domain_configure(struct k_thread *thread);
  * @param domain The memory domain structure
  * @param partition_id The partition that needs to be deleted
  */
-extern void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
-					      u32_t  partition_id);
+extern void z_arch_mem_domain_partition_remove(struct k_mem_domain *domain,
+					       u32_t partition_id);
 
 /**
  * @brief Remove the memory domain
@@ -100,7 +100,7 @@ extern void _arch_mem_domain_partition_remove(struct k_mem_domain *domain,
  *
  * @param domain The memory domain structure which needs to be deleted.
  */
-extern void _arch_mem_domain_destroy(struct k_mem_domain *domain);
+extern void z_arch_mem_domain_destroy(struct k_mem_domain *domain);
 #endif
 
 #ifdef CONFIG_USERSPACE
