@@ -115,8 +115,8 @@ def main():
         sys.exit(1)
 
     with open(args.output, "w") as fp:
-        write_gperf_table(fp, eh, objs, syms["_static_kernel_objects_begin"],
-                          syms["_static_kernel_objects_end"])
+        write_gperf_table(fp, eh, objs, syms["z_k_static_kernel_objects_begin"],
+                          syms["z_k_static_kernel_objects_end"])
 
 
 if __name__ == "__main__":
