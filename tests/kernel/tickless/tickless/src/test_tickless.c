@@ -27,7 +27,7 @@ static struct k_thread thread_tickless;
 static K_THREAD_STACK_DEFINE(thread_tickless_stack, STACKSIZE);
 
 #ifdef CONFIG_TICKLESS_IDLE
-extern s32_t _sys_idle_threshold_ticks;
+extern s32_t z_sys_idle_threshold_ticks;
 #endif
 
 #define TICKS_TO_MS  (MSEC_PER_SEC / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
@@ -102,9 +102,9 @@ void ticklessTestThread(void)
 
 	printk("Calibrating TSC...\n");
 #ifdef CONFIG_TICKLESS_IDLE
-	oldThreshold = _sys_idle_threshold_ticks;
+	oldThreshold = z_sys_idle_threshold_ticks;
 	/* make sure we do not enter tickless idle mode */
-	_sys_idle_threshold_ticks = 0x7FFFFFFF;
+	z_sys_idle_threshold_ticks = 0x7FFFFFFF;
 #endif
 
 	/* initialize the timer, if necessary */
@@ -140,7 +140,7 @@ void ticklessTestThread(void)
 	printk("Do the real test with tickless enabled\n");
 
 #ifdef CONFIG_TICKLESS_IDLE
-	_sys_idle_threshold_ticks = oldThreshold;
+	z_sys_idle_threshold_ticks = oldThreshold;
 #endif
 
 	printk("Going idle for %d ticks...\n", SLEEP_TICKS);

@@ -17,7 +17,7 @@
  * Idle time must be this value or higher for timer to go into tickless idle
  * state.
  */
-s32_t _sys_idle_threshold_ticks = CONFIG_TICKLESS_IDLE_THRESH;
+s32_t z_sys_idle_threshold_ticks = CONFIG_TICKLESS_IDLE_THRESH;
 
 #if defined(CONFIG_TICKLESS_KERNEL)
 #define _must_enter_tickless_idle(ticks) (1)
