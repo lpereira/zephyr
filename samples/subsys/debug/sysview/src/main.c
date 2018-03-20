@@ -98,7 +98,7 @@ static void sysview_api_send_task_list(void)
 {
 	struct k_thread *thr;
 
-	for (thr = _kernel.threads; thr; thr = thr->next_thread) {
+	for (thr = z_k_kernel.threads; thr; thr = thr->next_thread) {
 		char name[20];
 
 		snprintk(name, sizeof(name), "T%xE%x", (uintptr_t)thr,
