@@ -79,9 +79,9 @@ minimal
 -------
 This configuration does NOT produce any output. To observe its operation,
 invoke it using gdb and observe that:
-- the kernel's timer ISR & main thread increment "_sys_clock_tick_count" on a
+- the kernel's timer ISR & main thread increment "z_sys_clock_tick_count" on a
   regular basis
-- k_cpu_idle() is invoked by the idle task each time _sys_clock_tick_count
+- k_cpu_idle() is invoked by the idle task each time z_sys_clock_tick_count
   is incremented
 
 regular

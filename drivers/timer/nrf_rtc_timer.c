@@ -288,9 +288,9 @@ void _set_time(u32_t time)
 
 	/* Update expected_sys_ticls to time to programe*/
 	expected_sys_ticks = time;
-	_sys_clock_tick_count = _get_elapsed_clock_time();
+	z_sys_clock_tick_count = _get_elapsed_clock_time();
 	/* Update rtc_past to track rtc timer count*/
-	rtc_past = (_sys_clock_tick_count * RTC_TICKS_PER_SYS_TICK) & RTC_MASK;
+	rtc_past = (z_sys_clock_tick_count * RTC_TICKS_PER_SYS_TICK) & RTC_MASK;
 
 	expected_sys_ticks = expected_sys_ticks > _get_max_clock_time() ?
 				_get_max_clock_time() : expected_sys_ticks;
@@ -362,7 +362,7 @@ u64_t _get_elapsed_clock_time(void)
 	do {
 		/* Calculate number of rtc cycles elapsed since RTC programing*/
 		rtc_elapsed = (rtc_now - rtc_past) & RTC_MASK;
-		elapsed = _sys_clock_tick_count;
+		elapsed = z_sys_clock_tick_count;
 		rtc_prev = rtc_now;
 		rtc_now = RTC_COUNTER;
 	} while (rtc_now != rtc_prev);
@@ -530,7 +530,7 @@ u32_t _timer_cycle_get_32(void)
 	rtc_now = RTC_COUNTER;
 	/* Discard value of  RTC_COUNTER read at LFCLK transition */
 	do {
-		sys_clock_tick_count = _sys_clock_tick_count;
+		sys_clock_tick_count = z_sys_clock_tick_count;
 		elapsed_cycles = (rtc_now - (sys_clock_tick_count *
 					     RTC_TICKS_PER_SYS_TICK)) &
 				 RTC_MASK;

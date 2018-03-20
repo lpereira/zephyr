@@ -99,10 +99,10 @@ s64_t z_tick_get(void)
 {
 	s64_t tmp_sys_clock_tick_count;
 	/*
-	 * Lock the interrupts when reading _sys_clock_tick_count 64-bit
+	 * Lock the interrupts when reading z_sys_clock_tick_count 64-bit
 	 * variable. Some architectures (x86) do not handle 64-bit atomically,
 	 * so we have to lock the timer interrupt that causes change of
-	 * _sys_clock_tick_count
+	 * z_sys_clock_tick_count
 	 */
 	unsigned int imask = irq_lock();
 

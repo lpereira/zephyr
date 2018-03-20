@@ -21,7 +21,7 @@ struct test_struct __kernel_bss kernel_bss;
 struct test_struct __kernel_noinit kernel_noinit;
 
 /* Real kernel variable, check it is in the right place */
-extern volatile u64_t _sys_clock_tick_count;
+extern volatile u64_t z_sys_clock_tick_count;
 
 struct test_struct app_data = {3, 4, NULL};
 struct test_struct app_bss;
@@ -61,7 +61,7 @@ void test_app_memory(void)
 	zassert_true(kernel_loc(&kernel_bss), "not in kernel memory");
 	zassert_true(kernel_loc(&kernel_noinit), "not in kernel memory");
 
-	zassert_true(kernel_loc((void *)&_sys_clock_tick_count),
+	zassert_true(kernel_loc((void *)&z_sys_clock_tick_count),
 		     "not in kernel memory");
 }
 

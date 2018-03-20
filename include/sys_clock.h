@@ -107,7 +107,7 @@ extern int sys_clock_hw_cycles_per_tick;
  * @} end defgroup clock_apis
  */
 
-extern volatile u64_t _sys_clock_tick_count;
+extern volatile u64_t z_sys_clock_tick_count;
 
 /*
  * Number of ticks for x seconds. NOTE: With MSEC() or USEC(),

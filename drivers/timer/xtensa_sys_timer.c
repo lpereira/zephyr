@@ -171,7 +171,7 @@ static inline void _set_max_clock_time(void)
 	int key;
 
 	key = irq_lock();
-	_sys_clock_tick_count = _get_elapsed_clock_time();
+	z_sys_clock_tick_count = _get_elapsed_clock_time();
 	last_timer_value = GET_TIMER_CURRENT_TIME();
 	irq_unlock(key);
 	SET_TIMER_FIRE_TIME(MAX_TIMER_CYCLES); /* Program timer to max value */
@@ -195,7 +195,7 @@ void _set_time(u32_t time)
 	}
 	key = irq_lock();
 	/* Update System Level Ticks Time Keeping */
-	_sys_clock_tick_count = _get_elapsed_clock_time();
+	z_sys_clock_tick_count = _get_elapsed_clock_time();
 	C = GET_TIMER_CURRENT_TIME();
 	last_timer_value = C;
 	irq_unlock(key);
@@ -239,7 +239,7 @@ u64_t _get_elapsed_clock_time(void)
 	C = GET_TIMER_CURRENT_TIME();
 	elapsed = (last_timer_value <= C) ? (C - last_timer_value) :
 				(MAX_TIMER_CYCLES - last_timer_value) + C;
-	total = (_sys_clock_tick_count + (elapsed / cycles_per_tick));
+	total = (z_sys_clock_tick_count + (elapsed / cycles_per_tick));
 	irq_unlock(key);
 
 	return total;
