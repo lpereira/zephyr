@@ -20,7 +20,7 @@ extern "C" {
 
 #define SYS_PM_NOT_HANDLED		SYS_PM_ACTIVE_STATE
 
-extern unsigned char _sys_pm_idle_exit_notify;
+extern unsigned char z_sys_pm_idle_exit_notify;
 
 /**
  * @brief Power Management Hook Interface
@@ -41,7 +41,7 @@ extern unsigned char _sys_pm_idle_exit_notify;
  */
 static inline void _sys_soc_pm_idle_exit_notification_disable(void)
 {
-	_sys_pm_idle_exit_notify = 0;
+	z_sys_pm_idle_exit_notify = 0;
 }
 
 /**
