@@ -35,7 +35,7 @@
 #endif
 
 #if defined(CONFIG_BOOT_TIME_MEASUREMENT)
-	GDATA(__start_time_stamp)
+	GDATA(z_k_start_time_stamp)
 #endif
 
 #ifdef CONFIG_SYS_POWER_DEEP_SLEEP
@@ -198,8 +198,8 @@ __csSet:
 	/*
 	 * Store rdtsc result from temporary regiter ESI & EDI into memory.
 	 */
-        mov  %esi, __start_time_stamp  	/* low  value */
-        mov  %edi, __start_time_stamp+4    	/* high value */
+        mov  %esi, z_k_start_time_stamp  	/* low  value */
+        mov  %edi, z_k_start_time_stamp+4    	/* high value */
 #endif
 
 #if !defined(CONFIG_FLOAT)

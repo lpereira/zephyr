@@ -21,9 +21,9 @@
 #include <tc_util.h>
 
 /* externs */
-extern u64_t __start_time_stamp;    /* timestamp when kernel begins executing */
-extern u64_t __main_time_stamp;     /* timestamp when main() begins executing */
-extern u64_t z_k_idle_time_stamp;     /* timestamp when CPU went idle */
+extern u64_t z_k_start_time_stamp; /* timestamp when kernel begins executing */
+extern u64_t z_k_main_time_stamp;  /* timestamp when main() begins executing */
+extern u64_t z_k_idle_time_stamp;  /* timestamp when CPU went idle */
 
 void main(void)
 {
@@ -45,12 +45,12 @@ void main(void)
 
 	int freq = CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC / 1000000;
 
-	_start_us  =  __start_time_stamp / freq;
-	s_main_time_stamp =  __main_time_stamp - __start_time_stamp;
+	_start_us  =  z_k_start_time_stamp / freq;
+	s_main_time_stamp =  z_k_main_time_stamp - z_k_start_time_stamp;
 	main_us    =  s_main_time_stamp / freq;
-	s_task_time_stamp =  task_time_stamp   - __start_time_stamp;
+	s_task_time_stamp =  task_time_stamp   - z_k_start_time_stamp;
 	task_us    =  s_task_time_stamp / freq;
-	s_idle_time_stamp =  z_k_idle_time_stamp - __start_time_stamp;
+	s_idle_time_stamp =  z_k_idle_time_stamp - z_k_start_time_stamp;
 	idle_us    =  s_idle_time_stamp / freq;
 
 	/* Indicate start for sanity test suite */
@@ -60,7 +60,7 @@ void main(void)
 	TC_PRINT("Boot Result: Clock Frequency: %d MHz\n",
 		 freq);
 	TC_PRINT("__start       : %u cycles, %u us\n",
-		 (u32_t)(__start_time_stamp & 0xFFFFFFFFULL),
+		 (u32_t)(z_k_start_time_stamp & 0xFFFFFFFFULL),
 		 (u32_t) (_start_us  & 0xFFFFFFFFULL));
 	TC_PRINT("_start->main(): %u cycles, %u us\n",
 		 (u32_t)(s_main_time_stamp & 0xFFFFFFFFULL),
