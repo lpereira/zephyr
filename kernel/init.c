@@ -344,15 +344,15 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 	 *   contain garbage, which would prevent the cache loading algorithm
 	 *   to work as intended
 	 */
-	_ready_q.cache = _main_thread;
+	_ready_q.cache = z_k_main_thread;
 #endif
 
-	_setup_new_thread(_main_thread, z_k_main_stack,
+	_setup_new_thread(z_k_main_thread, z_k_main_stack,
 			  MAIN_STACK_SIZE, bg_thread_main,
 			  NULL, NULL, NULL,
 			  CONFIG_MAIN_THREAD_PRIORITY, K_ESSENTIAL);
-	_mark_thread_as_started(_main_thread);
-	_ready_thread(_main_thread);
+	_mark_thread_as_started(z_k_main_thread);
+	_ready_thread(z_k_main_thread);
 
 #ifdef CONFIG_MULTITHREADING
 	init_idle_thread(z_k_idle_thread, z_k_idle_stack);

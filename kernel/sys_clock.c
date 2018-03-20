@@ -263,8 +263,8 @@ static inline void handle_timeouts(s32_t ticks)
 
 #ifdef CONFIG_TIMESLICING
 s32_t z_k_time_slice_elapsed;
-s32_t _time_slice_duration = CONFIG_TIMESLICE_SIZE;
-int  _time_slice_prio_ceiling = CONFIG_TIMESLICE_PRIORITY;
+s32_t z_k_time_slice_duration = CONFIG_TIMESLICE_SIZE;
+int z_k_time_slice_prio_ceiling = CONFIG_TIMESLICE_PRIORITY;
 
 /*
  * Always called from interrupt level, and always only from the system clock

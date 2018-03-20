@@ -30,10 +30,10 @@
 extern struct _static_thread_data z_k_static_thread_data_list_start[];
 extern struct _static_thread_data z_k_static_thread_data_list_end[];
 
-#define _FOREACH_STATIC_THREAD(thread_data)              \
-	for (struct _static_thread_data *thread_data =   \
-	     _static_thread_data_list_start;             \
-	     thread_data < _static_thread_data_list_end; \
+#define _FOREACH_STATIC_THREAD(thread_data)                 \
+	for (struct _static_thread_data *thread_data =      \
+	     z_k_static_thread_data_list_start;             \
+	     thread_data < z_k_static_thread_data_list_end; \
 	     thread_data++)
 
 
