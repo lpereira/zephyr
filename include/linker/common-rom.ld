@@ -30,9 +30,9 @@
 	 */
 	SECTION_PROLOGUE(object_access, (OPTIONAL),)
 	{
-		__object_access_start = .;
+		z_k_object_access_start = .;
 		KEEP(*(".object_access.*"))
-		__object_access_end = .;
+		z_k_object_access_end = .;
 	}
 #endif
 	SECTION_PROLOGUE (devconfig, (OPTIONAL),)
