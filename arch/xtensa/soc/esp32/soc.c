@@ -29,8 +29,6 @@ void __attribute__((section(".iram1"))) __start(void)
 	volatile u32_t *wdt_timg_reg = (u32_t *)TIMG_WDTCONFIG0_REG(0);
 	volatile u32_t *app_cpu_config_reg = (u32_t *)DPORT_APPCPU_CTRL_B_REG;
 	extern u32_t _init_start;
-	extern u32_t _bss_start;
-	extern u32_t _bss_end;
 
 	/* Move the exception vector table to IRAM. */
 	__asm__ __volatile__ (
@@ -38,13 +36,7 @@ void __attribute__((section(".iram1"))) __start(void)
 		:
 		: "r"(&_init_start));
 
-	/* Zero out BSS.  Clobber _bss_start to avoid memset() elision. */
-	memset(&_bss_start, 0, (&_bss_end - &_bss_start) * sizeof(_bss_start));
-	__asm__ __volatile__ (
-		""
-		:
-		: "g"(&_bss_start)
-		: "memory");
+	z_k_bss_zero();
 
 	/* The watchdog timer is enabled in the bootloader.  We're done booting,
 	 * so disable it.
