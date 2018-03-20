@@ -24,7 +24,7 @@ extern "C" {
 
 /* Early boot functions */
 
-void _bss_zero(void);
+void z_k_bss_zero(void);
 #ifdef CONFIG_XIP
 void _data_copy(void);
 #else

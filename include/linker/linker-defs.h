@@ -194,7 +194,7 @@ extern char __kernel_ram_start[];
 extern char __kernel_ram_end[];
 extern char __kernel_ram_size[];
 
-/* Used by _bss_zero or arch-specific implementation */
+/* Used by z_k_bss_zero or arch-specific implementation */
 extern char __bss_start[];
 extern char __bss_end[];
 #ifdef CONFIG_APPLICATION_MEMORY

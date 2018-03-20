@@ -31,7 +31,7 @@
 
 void _PrepC(void)
 {
-	_bss_zero();
+	z_k_bss_zero();
 #ifdef CONFIG_XIP
 	_data_copy();
 #endif

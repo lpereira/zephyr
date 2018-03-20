@@ -111,7 +111,7 @@ void _PrepC(void)
 {
 	relocate_vector_table();
 	enable_floating_point();
-	_bss_zero();
+	z_k_bss_zero();
 	_data_copy();
 #ifdef CONFIG_BOOT_TIME_MEASUREMENT
 	__start_time_stamp = 0;

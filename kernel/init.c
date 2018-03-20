@@ -167,7 +167,7 @@ void k_call_stacks_analyze(void) { }
  *
  * @return N/A
  */
-void _bss_zero(void)
+void z_k_bss_zero(void)
 {
 	memset(&__bss_start, 0,
 		 ((u32_t) &__bss_end - (u32_t) &__bss_start));

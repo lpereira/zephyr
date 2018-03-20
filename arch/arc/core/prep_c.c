@@ -119,7 +119,7 @@ void _PrepC(void)
 {
 	_icache_setup();
 	adjust_vector_table_base();
-	_bss_zero();
+	z_k_bss_zero();
 	_data_copy();
 	_Cstart();
 	CODE_UNREACHABLE;
