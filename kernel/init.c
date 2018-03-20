@@ -389,7 +389,7 @@ static void prepare_multithreading(struct k_thread *dummy_thread)
 static void switch_to_main_thread(void)
 {
 #ifdef CONFIG_ARCH_HAS_CUSTOM_SWAP_TO_MAIN
-	_arch_switch_to_main_thread(_main_thread, z_k_main_stack,
+	_arch_switch_to_main_thread(z_k_main_thread, z_k_main_stack,
 				    MAIN_STACK_SIZE, bg_thread_main);
 #else
 	/*
