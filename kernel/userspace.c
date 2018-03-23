@@ -100,7 +100,7 @@ static int thread_index_get(struct k_thread *t)
 
 	ko = _k_object_find(t);
 
-	if (!ko) {
+	if (ko == NULL) {
 		return -1;
 	}
 
@@ -213,7 +213,7 @@ void _impl_k_object_access_grant(void *object, struct k_thread *thread)
 {
 	struct _k_object *ko = _k_object_find(object);
 
-	if (ko) {
+	if (ko != NULL) {
 		_thread_perms_set(ko, thread);
 	}
 }
@@ -222,7 +222,7 @@ void _impl_k_object_access_revoke(void *object, struct k_thread *thread)
 {
 	struct _k_object *ko = _k_object_find(object);
 
-	if (ko) {
+	if (ko != NULL) {
 		_thread_perms_clear(ko, thread);
 	}
 }
@@ -231,7 +231,7 @@ void k_object_access_all_grant(void *object)
 {
 	struct _k_object *ko = _k_object_find(object);
 
-	if (ko) {
+	if (ko != NULL) {
 		ko->flags |= K_OBJ_FLAG_PUBLIC;
 	}
 }
@@ -279,7 +279,7 @@ void _k_object_init(void *object)
 	 */
 
 	ko = _k_object_find(object);
-	if (!ko) {
+	if (ko == NULL) {
 		/* Supervisor threads can ignore rules about kernel objects
 		 * and may declare them on stacks, etc. Such objects will never
 		 * be usable from userspace, but we shouldn't explode.
@@ -297,7 +297,7 @@ void _k_object_uninit(void *object)
 
 	/* See comments in _k_object_init() */
 	ko = _k_object_find(object);
-	if (!ko) {
+	if (ko == NULL) {
 		return;
 	}
 

@@ -88,7 +88,7 @@ void k_queue_cancel_wait(struct k_queue *queue)
 
 	first_pending_thread = _unpend_first_thread(&queue->wait_q);
 
-	if (first_pending_thread) {
+	if (first_pending_thread != NULL) {
 		prepare_thread_to_run(first_pending_thread, NULL);
 		if (!_is_in_isr() && _must_switch_threads()) {
 			(void)_Swap(key);
@@ -113,7 +113,7 @@ void k_queue_insert(struct k_queue *queue, void *prev, void *data)
 
 	first_pending_thread = _unpend_first_thread(&queue->wait_q);
 
-	if (first_pending_thread) {
+	if (first_pending_thread != NULL) {
 		prepare_thread_to_run(first_pending_thread, data);
 		if (!_is_in_isr() && _must_switch_threads()) {
 			(void)_Swap(key);
@@ -161,7 +161,7 @@ void k_queue_append_list(struct k_queue *queue, void *head, void *tail)
 		need_sched = 1;
 	}
 
-	if (head) {
+	if (head != NULL) {
 		sys_slist_append_list(&queue->data_q, head, tail);
 	}
 

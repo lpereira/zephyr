@@ -157,7 +157,7 @@ static void *alloc_block(struct k_mem_pool *p, int l, size_t lsz)
 	int key = irq_lock();
 
 	block = sys_dlist_get(&p->levels[l].free_list);
-	if (block) {
+	if (block != NULL) {
 		clear_free_bit(p, l, block_num(p, block, lsz));
 	}
 	irq_unlock(key);
@@ -264,7 +264,7 @@ static int pool_alloc(struct k_mem_pool *p, struct k_mem_block *block,
 	/* Iteratively break the smallest enclosing block... */
 	blk = alloc_block(p, free_l, lsizes[free_l]);
 
-	if (!blk) {
+	if (blk == NULL) {
 		/* This can happen if we race with another allocator.
 		 * It's OK, just back out and the timeout code will
 		 * retry.  Note mild overloading: -EAGAIN isn't for
@@ -424,7 +424,7 @@ void *k_calloc(size_t nmemb, size_t size)
 	bounds = nmemb * size;
 #endif
 	ret = k_malloc(bounds);
-	if (ret) {
+	if (ret != NULL) {
 		memset(ret, 0, bounds);
 	}
 	return ret;

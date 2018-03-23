@@ -495,7 +495,7 @@ static inline struct k_thread *_unpend_first_thread(_wait_q_t *wait_q)
 {
 	struct k_thread *thread = _find_first_thread_to_unpend(wait_q, NULL);
 
-	if (thread) {
+	if (thread != NULL) {
 		_unpend_thread(thread);
 	}
 

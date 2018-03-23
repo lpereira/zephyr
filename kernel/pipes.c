@@ -315,7 +315,12 @@ static bool pipe_xfer_prepare(sys_dlist_t      *xfer_list,
 	sys_dlist_init(xfer_list);
 	num_bytes = 0;
 
-	while ((thread = (struct k_thread *) sys_dlist_peek_head(wait_q))) {
+	while (true) {
+		thread = (struct k_thread *)sys_dlist_peek_head(wait_q);
+		if (thread == NULL) {
+			break;
+		}
+
 		desc = (struct k_pipe_desc *)thread->base.swap_data;
 		num_bytes += desc->bytes_to_xfer;
 
@@ -446,7 +451,7 @@ int _k_pipe_put_internal(struct k_pipe *pipe, struct k_pipe_async *async_desc,
 
 	struct k_thread *thread = (struct k_thread *)
 				  sys_dlist_get(&xfer_list);
-	while (thread) {
+	while (thread != NULL) {
 		desc = (struct k_pipe_desc *)thread->base.swap_data;
 		bytes_copied = pipe_xfer(desc->buffer, desc->bytes_to_xfer,
 					  data + num_bytes_written,
@@ -468,7 +473,7 @@ int _k_pipe_put_internal(struct k_pipe *pipe, struct k_pipe_async *async_desc,
 	 * Copy any data to the reader that we left on the wait_q.
 	 * It is possible no data will be copied.
 	 */
-	if (reader) {
+	if (reader != NULL) {
 		desc = (struct k_pipe_desc *)reader->base.swap_data;
 		bytes_copied = pipe_xfer(desc->buffer, desc->bytes_to_xfer,
 					  data + num_bytes_written,
@@ -630,7 +635,7 @@ int _impl_k_pipe_get(struct k_pipe *pipe, void *data, size_t bytes_to_read,
 	 * into the pipe's circular buffer.
 	 */
 
-	while (thread) {
+	while (thread != NULL) {
 		desc = (struct k_pipe_desc *)thread->base.swap_data;
 		bytes_copied = pipe_buffer_put(pipe, desc->buffer,
 						desc->bytes_to_xfer);
@@ -644,7 +649,7 @@ int _impl_k_pipe_get(struct k_pipe *pipe, void *data, size_t bytes_to_read,
 		thread = (struct k_thread *)sys_dlist_get(&xfer_list);
 	}
 
-	if (writer) {
+	if (writer != NULL) {
 		desc = (struct k_pipe_desc *)writer->base.swap_data;
 		bytes_copied = pipe_buffer_put(pipe, desc->buffer,
 						desc->bytes_to_xfer);

@@ -104,7 +104,7 @@ static int do_sem_give(struct k_sem *sem)
 {
 	struct k_thread *thread = _unpend_first_thread(&sem->wait_q);
 
-	if (!thread) {
+	if (thread == NULL) {
 		increment_count_up_to_limit(sem);
 		return handle_poll_events(sem);
 	}
@@ -130,7 +130,7 @@ void _sem_give_non_preemptible(struct k_sem *sem)
 	struct k_thread *thread;
 
 	thread = _unpend_first_thread(&sem->wait_q);
-	if (!thread) {
+	if (thread == NULL) {
 		increment_count_up_to_limit(sem);
 		return;
 	}

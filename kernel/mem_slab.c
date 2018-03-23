@@ -119,7 +119,7 @@ void k_mem_slab_free(struct k_mem_slab *slab, void **mem)
 	int key = irq_lock();
 	struct k_thread *pending_thread = _unpend_first_thread(&slab->wait_q);
 
-	if (pending_thread) {
+	if (pending_thread != NULL) {
 		_set_thread_return_value_with_data(pending_thread, 0, *mem);
 		_abort_thread_timeout(pending_thread);
 		_ready_thread(pending_thread);

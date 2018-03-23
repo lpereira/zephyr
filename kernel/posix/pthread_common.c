@@ -13,7 +13,7 @@ void ready_one_thread(_wait_q_t *wq)
 {
 	struct k_thread *th = _unpend_first_thread(wq);
 
-	if (th) {
+	if (th != NULL) {
 		_abort_thread_timeout(th);
 		_ready_thread(th);
 	}

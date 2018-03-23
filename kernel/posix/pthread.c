@@ -355,7 +355,7 @@ int pthread_join(pthread_t thread, void **status)
 	}
 
 	if (pthread->state == PTHREAD_EXITED) {
-		if (status) {
+		if (status != NULL) {
 			*status = pthread->retval;
 		}
 	} else if (pthread->state == PTHREAD_DETACHED) {

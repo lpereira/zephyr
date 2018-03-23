@@ -138,7 +138,7 @@ int timer_settime(timer_t timerid, int flags, const struct itimerspec *value,
 	}
 
 	/*  Save time to expire and old reload value. */
-	if (ovalue) {
+	if (ovalue != NULL) {
 		timer_gettime(timerid, ovalue);
 	}
 

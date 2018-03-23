@@ -81,7 +81,7 @@ void _impl_k_stack_push(struct k_stack *stack, u32_t data)
 
 	first_pending_thread = _unpend_first_thread(&stack->wait_q);
 
-	if (first_pending_thread) {
+	if (first_pending_thread != NULL) {
 		_abort_thread_timeout(first_pending_thread);
 		_ready_thread(first_pending_thread);
 

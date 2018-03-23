@@ -314,7 +314,7 @@ int _handle_obj_poll_events(sys_dlist_t *events, u32_t state)
 	int must_reschedule;
 
 	poll_event = (struct k_poll_event *)sys_dlist_get(events);
-	if (!poll_event) {
+	if (poll_event == NULL) {
 		return 0;
 	}
 
@@ -339,7 +339,7 @@ int k_poll_signal(struct k_poll_signal *signal, int result)
 	signal->signaled = 1;
 
 	poll_event = (struct k_poll_event *)sys_dlist_get(&signal->poll_events);
-	if (!poll_event) {
+	if (poll_event == NULL) {
 		irq_unlock(key);
 		return 0;
 	}
