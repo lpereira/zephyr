@@ -119,8 +119,8 @@ void _impl_k_timer_start(struct k_timer *timer, s32_t duration, s32_t period)
 
 	volatile s32_t period_in_ticks, duration_in_ticks;
 
-	period_in_ticks = _ms_to_ticks(period);
-	duration_in_ticks = _ms_to_ticks(duration);
+	period_in_ticks = z_k_ms_to_ticks(period);
+	duration_in_ticks = z_k_ms_to_ticks(duration);
 
 	unsigned int key = irq_lock();
 

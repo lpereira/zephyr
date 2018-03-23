@@ -122,7 +122,7 @@ int sem_timedwait(sem_t *semaphore, struct timespec *abstime)
 	if (abstime_ms <= current_ms) {
 		timeout = 0;
 	} else {
-		timeout = _ms_to_ticks(msecs);
+		timeout = z_k_ms_to_ticks(msecs);
 	}
 
 	return take_and_convert(semaphore, timeout);

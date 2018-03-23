@@ -298,7 +298,7 @@ static void handle_time_slicing(s32_t ticks)
 	}
 #ifdef CONFIG_TICKLESS_KERNEL
 	next_ts =
-	    _ms_to_ticks(z_k_time_slice_duration - z_k_time_slice_elapsed);
+	    z_k_ms_to_ticks(z_k_time_slice_duration - z_k_time_slice_elapsed);
 #endif
 }
 #else
