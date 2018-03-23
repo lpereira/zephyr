@@ -23,7 +23,7 @@
 
 void mayfly_enable_cb(u8_t caller_id, u8_t callee_id, u8_t enable)
 {
-	(void)caller_id;
+	ARG_UNUSED(caller_id);
 
 	LL_ASSERT(callee_id == MAYFLY_CALL_ID_JOB);
 
@@ -36,7 +36,7 @@ void mayfly_enable_cb(u8_t caller_id, u8_t callee_id, u8_t enable)
 
 u32_t mayfly_is_enabled(u8_t caller_id, u8_t callee_id)
 {
-	(void)caller_id;
+	ARG_UNUSED(caller_id);
 
 	switch (callee_id) {
 	case MAYFLY_CALL_ID_WORKER:
@@ -69,7 +69,7 @@ u32_t mayfly_prio_is_equal(u8_t caller_id, u8_t callee_id)
 
 void mayfly_pend(u8_t caller_id, u8_t callee_id)
 {
-	(void)caller_id;
+	ARG_UNUSED(caller_id);
 
 	switch (callee_id) {
 	case MAYFLY_CALL_ID_WORKER:

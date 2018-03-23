@@ -8,7 +8,7 @@
 
 void syslog_hook_default(const char *fmt, ...)
 {
-	(void)(fmt);  /* Prevent warning about unused argument */
+	ARG_UNUSED(fmt);  /* Prevent warning about unused argument */
 }
 
 void (*syslog_hook)(const char *fmt, ...) = syslog_hook_default;

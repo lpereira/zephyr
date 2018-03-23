@@ -117,7 +117,7 @@ struct k_poll_event wait_events[] = {
 
 static void poll_wait_helper(void *use_fifo, void *p2, void *p3)
 {
-	(void)p2; (void)p3;
+	ARG_UNUSED(p2); ARG_UNUSED(p3);
 
 	k_sleep(250);
 
@@ -308,7 +308,7 @@ static K_THREAD_STACK_DEFINE(multi_stack, KB(1));
 
 static void multi(void *p1, void *p2, void *p3)
 {
-	(void)p1; (void)p2; (void)p3;
+	ARG_UNUSED(p1); ARG_UNUSED(p2); ARG_UNUSED(p3);
 
 	struct k_poll_event event;
 

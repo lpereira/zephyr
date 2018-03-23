@@ -32,8 +32,8 @@
 #else
 #define FAULT_DUMP(esf, fault) \
 	do {                   \
-		(void) esf;    \
-		(void) fault;  \
+		ARG_UNUSED(esf);    \
+		ARG_UNUSED(fault);  \
 	} while ((0))
 #endif
 

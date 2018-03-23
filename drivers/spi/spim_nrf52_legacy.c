@@ -75,7 +75,7 @@ static void spim_nrf52_print_cfg_registers(struct device *dev)
 		spim->TXD.PTR, spim->TXD.MAXCNT, spim->TXD.AMOUNT);
 
 	/* maybe unused */
-	(void)spim;
+	ARG_UNUSED(spim);
 }
 
 static int spim_nrf52_configure(struct device *dev,

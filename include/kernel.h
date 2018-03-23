@@ -4389,48 +4389,48 @@ extern void _arch_start_cpu(int cpu_num, k_thread_stack_t *stack, int sz,
  */
 inline void operator delete(void *ptr)
 {
-	(void)ptr;
+	ARG_UNUSED(ptr);
 }
 
 inline void operator delete[](void *ptr)
 {
-	(void)ptr;
+	ARG_UNUSED(ptr);
 }
 
 inline void *operator new(size_t size)
 {
-	(void)size;
+	ARG_UNUSED(size);
 	return NULL;
 }
 
 inline void *operator new[](size_t size)
 {
-	(void)size;
+	ARG_UNUSED(size);
 	return NULL;
 }
 
 /* Placement versions of operator new and delete */
 inline void operator delete(void *ptr1, void *ptr2)
 {
-	(void)ptr1;
-	(void)ptr2;
+	ARG_UNUSED(ptr1);
+	ARG_UNUSED(ptr2);
 }
 
 inline void operator delete[](void *ptr1, void *ptr2)
 {
-	(void)ptr1;
-	(void)ptr2;
+	ARG_UNUSED(ptr1);
+	ARG_UNUSED(ptr2);
 }
 
 inline void *operator new(size_t size, void *ptr)
 {
-	(void)size;
+	ARG_UNUSED(size);
 	return ptr;
 }
 
 inline void *operator new[](size_t size, void *ptr)
 {
-	(void)size;
+	ARG_UNUSED(size);
 	return ptr;
 }
 

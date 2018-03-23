@@ -312,8 +312,8 @@ int strict_check(struct http_parser *parser, int c)
 static inline
 int strict_check(struct http_parser *parser, int c)
 {
-	(void)parser;
-	(void)c;
+	ARG_UNUSED(parser);
+	ARG_UNUSED(c);
 	return 0;
 }
 # define NEW_MESSAGE() start_state
