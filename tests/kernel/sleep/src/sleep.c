@@ -98,7 +98,7 @@ static void test_thread(int arg1, int arg2)
 	start_tick = k_uptime_get_32();
 
 	/* FIXME: one tick less to account for
-	 * one  extra tick for _TICK_ALIGN in k_sleep
+	 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 	 */
 	k_sleep(ONE_SECOND - TICKS_PER_MS);
 	end_tick = k_uptime_get_32();
@@ -116,7 +116,7 @@ static void test_thread(int arg1, int arg2)
 
 	start_tick = k_uptime_get_32();
 	/* FIXME: one tick less to account for
-	 * one  extra tick for _TICK_ALIGN in k_sleep
+	 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 	 */
 	k_sleep(ONE_SECOND - TICKS_PER_MS);
 	end_tick = k_uptime_get_32();
@@ -133,7 +133,7 @@ static void test_thread(int arg1, int arg2)
 
 	start_tick = k_uptime_get_32();
 	/* FIXME: one tick less to account for
-	 * one  extra tick for _TICK_ALIGN in k_sleep
+	 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 	 */
 	k_sleep(ONE_SECOND - TICKS_PER_MS);
 	end_tick = k_uptime_get_32();
@@ -151,7 +151,7 @@ static void test_thread(int arg1, int arg2)
 	start_tick = k_uptime_get_32();
 
 	/* FIXME: one tick less to account for
-	 * one  extra tick for _TICK_ALIGN in k_sleep
+	 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 	 */
 	k_sleep(ONE_SECOND - TICKS_PER_MS);           /* Task will execute */
 	end_tick = k_uptime_get_32();
@@ -226,7 +226,7 @@ void test_sleep(void)
 	align_to_tick_boundary();
 	start_tick = k_uptime_get_32();
 	/* FIXME: one tick less to account for
-	 * one  extra tick for _TICK_ALIGN in k_sleep
+	 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 	 */
 	k_sleep(ONE_SECOND - TICKS_PER_MS);
 	end_tick = k_uptime_get_32();

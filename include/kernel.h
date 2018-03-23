@@ -1146,9 +1146,9 @@ static ALWAYS_INLINE s32_t _ms_to_ticks(s32_t ms)
 
 /* added tick needed to account for tick in progress */
 #ifdef CONFIG_TICKLESS_KERNEL
-#define _TICK_ALIGN 0
+#define Z_K_TICK_ALIGN 0
 #else
-#define _TICK_ALIGN 1
+#define Z_K_TICK_ALIGN 1
 #endif
 
 static inline s64_t __ticks_to_ms(s64_t ticks)

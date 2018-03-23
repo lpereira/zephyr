@@ -53,7 +53,7 @@ void _timer_expiration_handler(struct _timeout *t)
 	unsigned int key;
 
 	/*
-	 * if the timer is periodic, start it again; don't add _TICK_ALIGN
+	 * if the timer is periodic, start it again; don't add Z_K_TICK_ALIGN
 	 * since we're already aligned to a tick boundary
 	 */
 	if (timer->period > 0) {

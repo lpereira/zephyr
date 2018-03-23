@@ -218,7 +218,7 @@ inserted:
 	_mark_thread_as_pending(thread);
 
 	if (timeout != K_FOREVER) {
-		s32_t ticks = _TICK_ALIGN + z_k_ms_to_ticks(timeout);
+		s32_t ticks = Z_K_TICK_ALIGN + z_k_ms_to_ticks(timeout);
 
 		_add_thread_timeout(thread, wait_q, ticks);
 	}
@@ -383,7 +383,7 @@ void _impl_k_sleep(s32_t duration)
 		return;
 	}
 
-	ticks = _TICK_ALIGN + z_k_ms_to_ticks(duration);
+	ticks = Z_K_TICK_ALIGN + z_k_ms_to_ticks(duration);
 	key = irq_lock();
 
 	_remove_thread_from_ready_q(_current);

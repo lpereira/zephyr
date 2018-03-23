@@ -119,7 +119,7 @@ void ticklessTestThread(void)
 		start_time = k_uptime_get_32();
 		start_tsc = _TIMESTAMP_READ();
 		/* FIXME: one tick less to account for
-		 * one  extra tick for _TICK_ALIGN in k_sleep
+		 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 		 */
 		k_sleep((SLEEP_TICKS - 1) * TICKS_TO_MS);
 		end_tsc = _TIMESTAMP_READ();
@@ -154,7 +154,7 @@ void ticklessTestThread(void)
 		start_time = k_uptime_get_32();
 		start_tsc = _TIMESTAMP_READ();
 		/* FIXME: one tick less to account for
-		 * one  extra tick for _TICK_ALIGN in k_sleep
+		 * one  extra tick for Z_K_TICK_ALIGN in k_sleep
 		 */
 		k_sleep((SLEEP_TICKS - 1) * TICKS_TO_MS);
 		end_tsc = _TIMESTAMP_READ();
