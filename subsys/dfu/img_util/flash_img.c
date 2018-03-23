@@ -30,7 +30,7 @@ static bool flash_verify(struct device *dev, off_t offset,
 	int rc;
 
 	while (len) {
-		size = (len >= sizeof(temp)) ? sizeof(temp) : len;
+		size = min(sizeof(temp), len);
 		rc = flash_read(dev, offset, &temp, size);
 		if (rc) {
 			SYS_LOG_ERR("flash_read error %d offset=0x%08x",

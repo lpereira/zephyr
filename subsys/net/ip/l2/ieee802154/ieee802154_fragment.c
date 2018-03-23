@@ -173,7 +173,7 @@ static inline u8_t move_frag_data(struct net_buf *frag,
 	}
 
 	/* Calculate remaining room space for data to move */
-	move = next->len > room ? room : next->len;
+	move = min(next->len, room);
 
 	memmove(frag->data + frag->len, next->data, move);
 

@@ -287,7 +287,7 @@ static void thread_memory_read_done(void)
 {
 	u32_t n;
 
-	n = (length > MAX_PACKET) ? MAX_PACKET : length;
+	n = min(length, MAX_PACKET);
 	if ((addr + n) > memory_size) {
 		n = memory_size - addr;
 		stage = ERROR;
@@ -314,7 +314,7 @@ static void memoryRead(void)
 {
 	u32_t n;
 
-	n = (length > MAX_PACKET) ? MAX_PACKET : length;
+	n = min(length, MAX_PACKET);
 	if ((addr + n) > memory_size) {
 		n = memory_size - addr;
 		stage = ERROR;

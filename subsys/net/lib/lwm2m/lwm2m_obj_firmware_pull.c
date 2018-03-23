@@ -341,8 +341,7 @@ do_firmware_transfer_reply_cb(const struct coap_packet *response,
 		if (write_cb) {
 			/* flush incoming data to write_cb */
 			while (payload_len > 0) {
-				len = (payload_len > write_buflen) ?
-				       write_buflen : payload_len;
+				len = min(payload_len, write_buflen);
 				payload_len -= len;
 				payload_frag = net_frag_read(payload_frag,
 							     payload_offset,

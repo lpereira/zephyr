@@ -419,7 +419,7 @@ static int cdc_acm_fifo_fill(struct device *dev,
 	 * into USB TX Endpoint.
 	 */
 #ifdef CONFIG_SOC_SERIES_QUARK_SE
-	len = len > sizeof(u32_t) ? sizeof(u32_t) : len;
+	len = min(len, sizeof(u32_t));
 #endif
 
 	usb_write(CONFIG_CDC_ACM_IN_EP_ADDR, tx_data, len, &bytes_written);

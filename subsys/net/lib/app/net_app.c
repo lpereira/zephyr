@@ -1847,7 +1847,7 @@ int _net_app_ssl_mux(void *context, unsigned char *buf, size_t size)
 	pos = 0;
 	if (read_bytes > size) {
 		while (ctx->tls.mbedtls.ssl_ctx.frag) {
-			read_bytes = len < (size - pos) ? len : (size - pos);
+			read_bytes = min((size - pos), len);
 
 #if RX_EXTRA_DEBUG == 1
 			NET_DBG("Copying %d bytes", read_bytes);

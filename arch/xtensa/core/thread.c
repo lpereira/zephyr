@@ -71,7 +71,7 @@ void _new_thread(struct k_thread *thread, k_thread_stack_t *stack,
 	cpSA = (u32_t *)(thread->arch.preempCoprocReg.cpStack + XT_CP_ASA);
 	/* Coprocessor's save area alignment is at leat 16 bytes */
 	*cpSA = ROUND_UP(cpSA + 1,
-		(XCHAL_TOTAL_SA_ALIGN < 16 ? 16 : XCHAL_TOTAL_SA_ALIGN));
+		(max(16, XCHAL_TOTAL_SA_ALIGN)));
 #ifdef CONFIG_DEBUG
 	printk("cpStack  = %p\n", thread->arch.preempCoprocReg.cpStack);
 	printk("cpAsa    = %p\n",
