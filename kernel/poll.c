@@ -29,7 +29,7 @@ void k_poll_event_init(struct k_poll_event *event, u32_t type,
 {
 	__ASSERT(mode == K_POLL_MODE_NOTIFY_ONLY,
 		 "only NOTIFY_ONLY mode is supported\n");
-	__ASSERT(type < (1 << _POLL_NUM_TYPES), "invalid type\n");
+	__ASSERT(type < BIT(_POLL_NUM_TYPES), "invalid type\n");
 	__ASSERT(obj, "must provide an object\n");
 
 	event->poller = NULL;

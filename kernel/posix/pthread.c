@@ -157,7 +157,7 @@ int pthread_create(pthread_t *newthread, const pthread_attr_t *attr,
 		return EAGAIN;
 	}
 
-	thread->cancel_state = (1 << _PTHREAD_CANCEL_POS) & attr->flags;
+	thread->cancel_state = BIT(_PTHREAD_CANCEL_POS) & attr->flags;
 	thread->state = attr->detachstate;
 	thread->cancel_pending = 0;
 	thread->state_lock.sem = &thread->state_lock_sem;

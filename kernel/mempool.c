@@ -61,7 +61,7 @@ static void set_free_bit(struct k_mem_pool *p, int level, int bn)
 	u32_t *word;
 	int bit = get_bit_ptr(p, level, bn, &word);
 
-	*word |= (1<<bit);
+	*word |= BIT(bit);
 }
 
 static void clear_free_bit(struct k_mem_pool *p, int level, int bn)
@@ -69,7 +69,7 @@ static void clear_free_bit(struct k_mem_pool *p, int level, int bn)
 	u32_t *word;
 	int bit = get_bit_ptr(p, level, bn, &word);
 
-	*word &= ~(1<<bit);
+	*word &= ~BIT(bit);
 }
 
 /* Returns all four of the free bits for the specified blocks
