@@ -455,7 +455,7 @@ _find_first_thread_to_unpend(_wait_q_t *wait_q, struct k_thread *from)
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 	extern volatile int z_k_handling_timeouts;
 
-	if (z_k_handling_timeouts) {
+	if (z_k_handling_timeouts != 0) {
 		sys_dlist_t *q = (sys_dlist_t *)wait_q;
 		sys_dnode_t *cur = from ? &from->base.k_q_node : NULL;
 
