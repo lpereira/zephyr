@@ -66,20 +66,79 @@ _set_thread_return_value(struct k_thread *thread, unsigned int value)
 
 extern void k_cpu_atomic_idle(unsigned int imask);
 
-extern void _MsrWrite(unsigned int msr, u64_t msrData);
-extern u64_t _MsrRead(unsigned int msr);
+/**
+ * @brief Write to a model specific register (MSR)
+ *
+ * This function is used to write to an MSR.
+ *
+ * The definitions of the so-called  "Architectural MSRs" are contained
+ * in kernel_structs.h and have the format: IA32_XXX_MSR
+ *
+ * INTERNAL
+ * 1) The 'wrmsr' instruction was introduced in the Pentium processor; executing
+ *    this instruction on an earlier IA-32 processor will result in an invalid
+ *    opcode exception.
+ * 2) The 'wrmsr' uses the ECX, EDX, and EAX registers which matches the set of
+ *    volatile registers!
+ *
+ * @return N/A
+ */
+static inline void _x86_msr_write(unsigned int msr, u64_t data)
+{
+	__asm__ volatile (
+	    "movl %[msr], %%ecx\n\t"
+	    "movl %[data_lo], %%eax\n\t"
+	    "movl %[data_hi], %%edx\n\t"
+	    "wrmsr"
+	    :
+	    : [msr] "m" (msr),
+	      [data_lo] "rm" ((u32_t)(data & 0xFFFFFFFF)),
+	      [data_hi] "rm" ((u32_t)(data >> 32))
+	    : "eax", "ecx", "edx");
+}
+
+/**
+ * @brief Read from a model specific register (MSR)
+ *
+ * This function is used to read from an MSR.
+ *
+ * The definitions of the so-called  "Architectural MSRs" are contained
+ * in kernel_structs.h and have the format: IA32_XXX_MSR
+ *
+ * INTERNAL
+ * 1) The 'rdmsr' instruction was introduced in the Pentium processor; executing
+ *    this instruction on an earlier IA-32 processor will result in an invalid
+ *    opcode exception.
+ * 2) The 'rdmsr' uses the ECX, EDX, and EAX registers which matches the set of
+ *    volatile registers!
+ *
+ * @return N/A
+ */
+static inline u64_t _x86_msr_read(unsigned int msr)
+{
+	u64_t ret;
+
+	__asm__ volatile (
+	    "movl %[msr], %%ecx\n\t"
+	    "rdmsr"
+	    : "=A" (ret)
+	    : [msr] "rm" (msr)
+	    : "ecx");
+
+	return ret;
+}
 
 #ifdef CONFIG_JAILHOUSE_X2APIC
 #define MSR_X2APIC_BASE 0x00000800
 
 static inline u32_t read_x2apic(unsigned int reg)
 {
-	return _MsrRead(MSR_X2APIC_BASE + reg);
+	return _x86_msr_read(MSR_X2APIC_BASE + reg);
 }
 
 static inline void write_x2apic(unsigned int reg, u32_t val)
 {
-	_MsrWrite(MSR_X2APIC_BASE + reg, val);
+	_x86_msr_write(MSR_X2APIC_BASE + reg, val);
 }
 #endif
 
