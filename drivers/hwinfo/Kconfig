@@ -48,4 +48,11 @@ config HWINFO_IMXRT
 	help
 	  Enable NXP i.mx RT hwinfo driver.
 
+config HWINFO_ESP32
+	bool "ESP32 device ID"
+	default y
+	depends on SOC_ESP32
+	help
+	  Enable ESP32 hwinfo driver.
+
 endif
