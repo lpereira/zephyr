@@ -53,6 +53,7 @@ struct k_thread *_find_first_thread_to_unpend(_wait_q_t *wait_q,
 					      struct k_thread *from);
 void idle(void *a, void *b, void *c);
 void z_time_slice(int ticks);
+void _move_thread_to_another_wait_q(struct k_thread *thread, _wait_q_t *new_q);
 
 static inline void _pend_curr_unlocked(_wait_q_t *wait_q, s32_t timeout)
 {

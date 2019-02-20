@@ -414,6 +414,23 @@ ALWAYS_INLINE void _unpend_thread_no_timeout(struct k_thread *thread)
 	thread->base.pended_on = NULL;
 }
 
+ALWAYS_INLINE void _move_thread_to_another_wait_q(struct k_thread *thread, _wait_q_t *new_q)
+{
+	s32_t ticks = thread->base.timeout.dticks;
+
+	__ASSERT_NO_MSG(new_q != NULL);
+
+	_abort_thread_timeout(thread);
+
+	LOCKED(&sched_lock) {
+		_priq_wait_remove(&pended_on(thread)->waitq, t);
+		_priq_wait_add(&new_q, thread);
+	}
+
+	_add_thread_timeout(thread, ticks);
+	thread->base.pended_on = new_q;
+}
+
 #ifdef CONFIG_SYS_CLOCK_EXISTS
 /* Timeout handler for *_thread_timeout() APIs */
 void z_thread_timeout(struct _timeout *to)
